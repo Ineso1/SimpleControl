@@ -1,0 +1,25 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${FLAIR_ROOT}/flair-src/lib/**",
+                "${FLAIR_ROOT}/flair-src/lib/FlairCore/src",
+                "${FLAIR_ROOT}/flair-src/lib/FlairFilter/src",
+                "${FLAIR_ROOT}/flair-src/lib/FlairMeta/src",
+                "${FLAIR_ROOT}/flair-src/lib/FlairSensorActuator/src",
+                "${FLAIR_ROOT}/flair-src/lib/FlairIpc/src",
+                "${FLAIR_ROOT}/flair-src/lib/FlairSimulator/src",
+                "${FLAIR_ROOT}/flair-src/lib/FlairVisionFilter/src",
+                "/usr/include/eigen3"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "c17",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "linux-clang-x64"
+        }
+    ],
+    "version": 4
+}

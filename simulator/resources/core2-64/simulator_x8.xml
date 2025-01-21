@@ -1,0 +1,123 @@
+<?xml version="1.0"?>
+<!DOCTYPE remote_ui_xml>
+<root name="interface">
+  <TabWidget name="Main_TabWidget">
+    <Tab name="Drone_0">
+      <TabWidget name="tabs">
+        <Tab name="sampling">
+          <DoubleSpinBox value="0.001" name="Tech (s):"/>
+        </Tab>
+        <Tab name="optitrack">
+          <CheckBox value="1" name="enabled"/>
+        </Tab>
+        <Tab name="init">
+          <DoubleSpinBox value="-1.5" name="x:"/>
+          <DoubleSpinBox value="0" name="y:"/>
+          <DoubleSpinBox value="-1.2" name="z:"/>
+          <SpinBox value="90" name="yaw (deg):"/>
+          <Vector3DSpinBox name="position" value_x="-1.5" value_y="0" value_z="-1"/>
+        </Tab>
+        <Tab name="model">
+          <DoubleSpinBox value="1.6" name="mass:"/>
+          <DoubleSpinBox value="0.2" name="arm length:"/>
+          <DoubleSpinBox value="0" name="position G:"/>
+          <DoubleSpinBox value="0.001" name="k_mot:"/>
+          <DoubleSpinBox value="0.001" name="c_mot:"/>
+          <DoubleSpinBox value="0.01" name="f_air_vert:"/>
+          <DoubleSpinBox value="0.4" name="f_air_lat:"/>
+          <DoubleSpinBox value="0.006" name="j_roll:"/>
+          <DoubleSpinBox value="0.006" name="j_pitch:"/>
+          <DoubleSpinBox value="0.1" name="j_yaw:"/>
+          <DoubleSpinBox value="0" name="j_r:"/>
+          <DoubleSpinBox value="0.72" name="sigma:"/>
+          <DoubleSpinBox value="1" name="S:"/>
+          <SpinBox name="motor timeout:" value="100"/>
+        </Tab>
+        <Tab name="us">
+          <GroupBox name="position">
+            <DoubleSpinBox value="0" name="x:"/>
+            <DoubleSpinBox value="0" name="y:"/>
+            <DoubleSpinBox value="0.04" name="z:"/>
+          </GroupBox>
+          <GroupBox name="direction">
+            <DoubleSpinBox value="0" name="x:"/>
+            <DoubleSpinBox value="0" name="y:"/>
+            <DoubleSpinBox value="1" name="z:"/>
+          </GroupBox>
+          <DoubleSpinBox value="6" name="range:"/>
+          <Vector3DSpinBox name="position" value_x="0" value_y="0" value_z="0.04"/>
+          <Vector3DSpinBox name="direction" value_x="0" value_y="0" value_z="1"/>
+        </Tab>
+        <Tab name="bottom camera">
+          <GroupBox name="position">
+            <DoubleSpinBox value="0" name="x:"/>
+            <DoubleSpinBox value="0" name="y:"/>
+            <DoubleSpinBox value="0" name="z:"/>
+          </GroupBox>
+          <GroupBox name="direction">
+            <DoubleSpinBox value="0" name="x:"/>
+            <DoubleSpinBox value="0" name="y:"/>
+            <DoubleSpinBox value="1" name="z:"/>
+          </GroupBox>
+          <GroupBox name="up">
+            <DoubleSpinBox value="1" name="x:"/>
+            <DoubleSpinBox value="0" name="y:"/>
+            <DoubleSpinBox value="0" name="z:"/>
+          </GroupBox>
+          <DoubleSpinBox value="70" name="fov:"/>
+          <Vector3DSpinBox name="position" value_x="0" value_y="0" value_z="0"/>
+          <Vector3DSpinBox name="direction" value_x="0.00" value_y="0.00" value_z="1.00"/>
+          <Vector3DSpinBox name="up" value_x="1.00" value_y="0.00" value_z="0.00"/>
+        </Tab>
+        <Tab name="front camera">
+          <GroupBox name="position">
+            <DoubleSpinBox value="0" name="x:"/>
+            <DoubleSpinBox value="0" name="y:"/>
+            <DoubleSpinBox value="0" name="z:"/>
+          </GroupBox>
+          <GroupBox name="direction">
+            <DoubleSpinBox value="1" name="x:"/>
+            <DoubleSpinBox value="0" name="y:"/>
+            <DoubleSpinBox value="0" name="z:"/>
+          </GroupBox>
+          <GroupBox name="up">
+            <DoubleSpinBox value="0" name="x:"/>
+            <DoubleSpinBox value="0" name="y:"/>
+            <DoubleSpinBox value="-1" name="z:"/>
+          </GroupBox>
+          <DoubleSpinBox value="70" name="fov:"/>
+          <Vector3DSpinBox name="position" value_x="0" value_y="0" value_z="0"/>
+          <Vector3DSpinBox name="direction" value_x="1.00" value_y="0.00" value_z="0.00"/>
+          <Vector3DSpinBox name="up" value_x="0.00" value_y="0.00" value_z="-1.00"/>
+        </Tab>
+      </TabWidget>
+    </Tab>
+    <Tab name="target">
+      <TabWidget name="tabs">
+        <Tab name="sampling">
+          <DoubleSpinBox value="0.02" name="Tech (s):"/>
+        </Tab>
+        <Tab name="optitrack">
+          <CheckBox value="1" name="enabled"/>
+        </Tab>
+        <Tab name="init">
+          <DoubleSpinBox value="0" name="x:"/>
+          <DoubleSpinBox value="0" name="y:"/>
+          <DoubleSpinBox value="0" name="z:"/>
+          <SpinBox value="90" name="yaw (deg):"/>
+          <Vector3DSpinBox name="position" value_x="-1.5" value_y="1" value_z="0"/>
+        </Tab>
+        <Tab name="model">
+          <DoubleSpinBox value="1.3" name="translational speed (m/s):"/>
+          <DoubleSpinBox value="60" name="rotational speed (deg/s):"/>
+        </Tab>
+      </TabWidget>
+    </Tab>
+  </TabWidget>
+  <TabWidget name="App_TabWidget">
+    <Tab name="simulator">
+      <PushButton name="save config on target" value="1"/>
+    </Tab>
+  </TabWidget>
+  <PushButton name="save config on target (simulator)" value="1"/>
+</root>
