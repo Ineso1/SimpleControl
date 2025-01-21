@@ -1,1 +1,1 @@
-# DroneEmbeddedControl
+# Control simple
