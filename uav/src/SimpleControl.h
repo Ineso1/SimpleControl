@@ -2,6 +2,12 @@
 #define CIRCLEFOLLOWER_H
 
 #include <UavStateMachine.h>
+#include <fstream>
+#include <Quaternion.h>
+#include "Flags.h"
+#include <iostream>
+#include <PidThrust.h>
+#include <NestedSat.h>
 
 namespace flair {
     namespace gui {
@@ -33,6 +39,13 @@ class SimpleControl : public flair::meta::UavStateMachine {
 
         BehaviourMode_t behaviourMode;
         bool vrpnLost;
+        bool first_up;
+        flair::core::Quaternion qI;
+        flair::core::Quaternion mixQuaternion;
+        flair::core::Vector3Df mixAngSpeed;
+
+        float refAltitude;
+        float refVerticalVelocity;
 
         void VrpnPositionHold(void);//flight mode
         void StartCircle(void);
@@ -45,8 +58,15 @@ class SimpleControl : public flair::meta::UavStateMachine {
         void PositionValues(flair::core::Vector2Df &pos_error,flair::core::Vector2Df &vel_error,float &yaw_ref);
         flair::core::AhrsData *GetReferenceOrientation(void) override;
         void SignalEvent(Event_t event) override;
+        void SaveStateCSV(flair::core::Vector3Df& p, flair::core::Vector3Df& dp, flair::core::Quaternion& q, flair::core::Vector3Df& omega);
+        void InitStateCSV();
+        void MixOrientation();
+        float ComputeCustomThrust(void) override;
 
         flair::filter::Pid *uX, *uY;
+
+        flair::filter::PidThrust *uZ_aux;
+
 
         flair::core::Vector2Df posHold;
         float yawHold;
@@ -55,6 +75,7 @@ class SimpleControl : public flair::meta::UavStateMachine {
         flair::meta::MetaVrpnObject *targetVrpn,*uavVrpn;
         flair::filter::TrajectoryGenerator2DCircle *circle;
         flair::core::AhrsData *customReferenceOrientation,*customOrientation;
+        std::string statePathCSV;
 };
 
 #endif // CIRCLEFOLLOWER_H

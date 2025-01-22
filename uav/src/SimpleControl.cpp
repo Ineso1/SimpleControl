@@ -65,14 +65,25 @@ SimpleControl::SimpleControl(TargetController *controller): UavStateMachine(cont
     uX->UseDefaultPlot(graphLawTab->NewRow());
     uY=new Pid(setupLawTab->At(1,1),"u_y");
     uY->UseDefaultPlot(graphLawTab->LastRowLastCol());
+    uZ_aux = new PidThrust(setupLawTab->At(1,3), "u_z_aux");
+    uZ_aux->UseDefaultPlot(graphLawTab->LastRowLastCol());
+
 
     customReferenceOrientation= new AhrsData(this,"reference");
     uav->GetAhrs()->AddPlot(customReferenceOrientation,DataPlot::Yellow);
     AddDataToControlLawLog(customReferenceOrientation);
     AddDeviceToControlLawLog(uX);
     AddDeviceToControlLawLog(uY);
+    AddDeviceToControlLawLog(uZ_aux);
 
     customOrientation=new AhrsData(this,"orientation");
+
+    #ifdef CSV_STATE
+        InitStateCSV();
+    #endif
+
+    refAltitude = 1;
+    refVerticalVelocity = 0;
 }
 
 SimpleControl::~SimpleControl() {
@@ -98,19 +109,52 @@ const AhrsData *SimpleControl::GetOrientation(void) const {
 }
 
 void SimpleControl::AltitudeValues(float &z,float &dz) const{
-    Vector3Df uav_pos,uav_vel;
+    Vector3Df p,dp;
 
-    uavVrpn->GetPosition(uav_pos);
-    uavVrpn->GetSpeed(uav_vel);
+    uavVrpn->GetPosition(p);
+    uavVrpn->GetSpeed(dp);
     //z and dz must be in uav's frame
-    z=-uav_pos.z;
-    dz=-uav_vel.z;
+    z=-p.z;
+    dz=-dp.z;
 }
 
 AhrsData *SimpleControl::GetReferenceOrientation(void) {
     Vector2Df pos_err, vel_err; // in Uav coordinate system
     float yaw_ref;
     Euler refAngles;
+    Vector3Df p,dp; // in VRPN coordinate system
+
+    /*******************
+     *
+     * Feedback vars
+     *  
+     *******************/
+
+
+    Quaternion ahrsQuaternion;
+    Vector3Df ahrsAngularSpeed;
+    Quaternion q;
+    Vector3Df omega;
+
+    uavVrpn->GetPosition(p);
+    uavVrpn->GetSpeed(dp);
+    MixOrientation();
+    q = mixQuaternion;
+    omega = mixAngSpeed;
+
+    SaveStateCSV(p, dp, q, omega);
+
+    PidThrust *uZ_pub = GetUZ();
+    Pid* uYaw_pub = GetUYaw();
+    NestedSat* uRoll_pub = GetURoll();
+    NestedSat* uPitch_pub = GetUPitch();
+
+    float uZ_val = uZ_pub->Output();
+    float uYaw_val = uYaw_pub->Output();
+    float uPitch_val = uPitch_pub->Output();
+    float uRoll_val = uRoll_pub->Output();
+
+    /*******************/
 
     PositionValues(pos_err, vel_err, yaw_ref);
 
@@ -130,14 +174,14 @@ AhrsData *SimpleControl::GetReferenceOrientation(void) {
 }
 
 void SimpleControl::PositionValues(Vector2Df &pos_error,Vector2Df &vel_error,float &yaw_ref) {
-    Vector3Df uav_pos,uav_vel; // in VRPN coordinate system
+    Vector3Df p,dp; // in VRPN coordinate system
     Vector2Df uav_2Dpos,uav_2Dvel; // in VRPN coordinate system
 
-    uavVrpn->GetPosition(uav_pos);
-    uavVrpn->GetSpeed(uav_vel);
+    uavVrpn->GetPosition(p);
+    uavVrpn->GetSpeed(dp);
 
-    uav_pos.To2Dxy(uav_2Dpos);
-    uav_vel.To2Dxy(uav_2Dvel);
+    p.To2Dxy(uav_2Dpos);
+    dp.To2Dxy(uav_2Dvel);
 
     if (behaviourMode==BehaviourMode_t::PositionHold) {
         pos_error=uav_2Dpos-posHold;
@@ -160,7 +204,7 @@ void SimpleControl::PositionValues(Vector2Df &pos_error,Vector2Df &vel_error,flo
         //error in optitrack frame
         pos_error=uav_2Dpos-circle_pos;
         vel_error=uav_2Dvel-circle_vel;
-        yaw_ref=atan2(target_pos.y-uav_pos.y,target_pos.x-uav_pos.x);
+        yaw_ref=atan2(target_pos.y-p.y,target_pos.x-p.x);
     }
 
     //error in uav frame
@@ -169,6 +213,7 @@ void SimpleControl::PositionValues(Vector2Df &pos_error,Vector2Df &vel_error,flo
     currentQuaternion.ToEuler(currentAngles);
     pos_error.Rotate(-currentAngles.yaw);
     vel_error.Rotate(-currentAngles.yaw);
+
 }
 
 void SimpleControl::SignalEvent(Event_t event) {
@@ -246,15 +291,21 @@ void SimpleControl::StartCircle(void) {
         Thread::Warn("SimpleControl: could not start circle\n");
         return;
     }
-    Vector3Df uav_pos,target_pos;
+    if(SetThrustMode(ThrustMode_t::Custom)){
+        std::cout<<"Thrust Custom"<<std::endl;
+    } else {
+        std::cout<<"Thrust no se puede custom"<<std::endl;
+    }
+
+    Vector3Df p,target_pos;
     Vector2Df uav_2Dpos,target_2Dpos;
 
     targetVrpn->GetPosition(target_pos);
     target_pos.To2Dxy(target_2Dpos);
     circle->SetCenter(target_2Dpos);
 
-    uavVrpn->GetPosition(uav_pos);
-    uav_pos.To2Dxy(uav_2Dpos);
+    uavVrpn->GetPosition(p);
+    p.To2Dxy(uav_2Dpos);
     circle->StartTraj(uav_2Dpos);
 
     uX->Reset();
@@ -290,4 +341,66 @@ void SimpleControl::VrpnPositionHold(void) {
     behaviourMode=BehaviourMode_t::PositionHold;
     SetOrientationMode(OrientationMode_t::Custom);
     Thread::Info("SimpleControl: holding position\n");
+}
+
+
+void SimpleControl::SaveStateCSV(flair::core::Vector3Df &p, flair::core::Vector3Df &dp, flair::core::Quaternion &q, flair::core::Vector3Df &omega){
+    std::ofstream fileStateCSV("/home/nessy/flair/flair-src/myDemos/SimpleControl/DataCSV/State.csv", std::ios::app);
+    if (fileStateCSV.is_open()) {
+        fileStateCSV    << p.x << "," << p.y << "," << p.z << "," 
+                        << dp.x << "," << dp.y << "," << dp.z << "," 
+                        << q.q0 << "," << q.q1 << "," << q.q2 << "," << q.q3 << ","
+                        << omega.x << "," << omega.y << "," << omega.z
+                        << std::endl;
+    }
+    else{
+        std::cout<<"..."<<std::endl;
+    }
+}
+
+void SimpleControl::InitStateCSV(){
+    std::ofstream fileStateCSV("/home/nessy/flair/flair-src/myDemos/SimpleControl/DataCSV/State.csv", std::ios::app);
+    if (fileStateCSV.is_open()) {
+        fileStateCSV << "p_x" << "," << "p_y" << "," << "p_z" << "," << "dp_x" << "," << "dp_y" << "," << "dp_z" << "," << "q_w" << ","  << "q_x" << "," << "q_y" << "," << "q_z" << ","  << "omega_x" << "," << "omega_y" << "," << "omega_z" << std::endl;
+    }
+    else{
+        std::cout<<"No se puede "<<std::endl;
+    }
+}
+
+void SimpleControl::MixOrientation() {
+    Quaternion ahrsQuaternion;
+    Vector3Df ahrsAngularSpeed;
+    GetDefaultOrientation()->GetQuaternionAndAngularRates(ahrsQuaternion, ahrsAngularSpeed);
+
+    if (first_up) {
+        Quaternion vrpnQuaternion;
+        uavVrpn->GetQuaternion(vrpnQuaternion);
+        Euler vrpnEuler;
+        vrpnQuaternion.ToEuler(vrpnEuler);
+        vrpnQuaternion.q0 = std::cos(vrpnEuler.yaw / 2);
+        vrpnQuaternion.q1 = 0;
+        vrpnQuaternion.q2 = 0;
+        vrpnQuaternion.q3 = std::sin(vrpnEuler.yaw / 2);
+        vrpnQuaternion.Normalize();
+        qI = vrpnQuaternion * ahrsQuaternion.GetConjugate();
+        first_up = false;
+    }
+
+    mixQuaternion = qI * ahrsQuaternion;
+    mixQuaternion.Normalize();
+    mixAngSpeed = ahrsAngularSpeed;
+}
+
+
+float SimpleControl::ComputeCustomThrust(){
+    // compute desired altitude
+    float currentAltitude, currentVerticalSpeed;
+    AltitudeValues(currentAltitude, currentVerticalSpeed);
+    float p_error = currentAltitude - refAltitude;
+    float d_error = currentVerticalSpeed - refVerticalVelocity;
+    uZ_aux->SetValues(p_error, d_error);
+    uZ_aux->Update(GetTime());
+    float savedDefaultThrust = uZ_aux->Output();
+    return savedDefaultThrust;
 }
