@@ -11,6 +11,9 @@ include($ENV{FLAIR_ROOT}/flair-src/cmake-modules/GlobalCmakeFlair.cmake)
 SET(SRC_FILES
 	src/main.cpp
 	src/SimpleControl.cpp
+    src/Drone.cpp
+    src/DroneBase.cpp
+    src/MyLaw.cpp
 )
 
 FLAIR_DEMO(${PROJECT_NAME} "${SRC_FILES}"
