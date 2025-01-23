@@ -17,11 +17,15 @@ Drone::Drone(TargetController *controller) : DroneBase(controller) {
     // Set Zero Orientation 
     initQuaternion =  GetCurrentQuaternion();
     customReferenceOrientation= new AhrsData(this,"reference");
+    customOrientation=new AhrsData(this,"orientation");
 
     // Set current position target
     flair::core::Vector3Df uav_p;
     uavVrpn->GetPosition(uav_p);
     currentTarget = Vector3Df(uav_p.x,uav_p.y,1);
+
+    refAltitude = 1;
+    refVerticalVelocity = 0;
 }
 
 Drone::~Drone() {
@@ -147,7 +151,14 @@ void Drone::MixOrientation() {
 *****************************************/
 
 float Drone::ComputeCustomThrust() {
-    return 0;
+    Vector3Df p,dp;
+    float thrust = 0;
+    uavVrpn->GetPosition(p);
+    uavVrpn->GetSpeed(dp);
+    myLaw->UpdateThrustControl(p, dp);
+    thrust = myLaw->uZ_custom->Output();
+    std::cout<<thrust<<std::endl;
+    return thrust;
 }
 
 
@@ -194,7 +205,15 @@ AhrsData *Drone::GetReferenceOrientation(void) {
     return customReferenceOrientation;
 }
 
+void Drone::AltitudeValues(float &z,float &dz) const{
+    Vector3Df p,dp;
 
+    uavVrpn->GetPosition(p);
+    uavVrpn->GetSpeed(dp);
+    //z and dz must be in uav's frame
+    z=-p.z;
+    dz=-dp.z;
+}
 
 /***************************************** 
  * Control behave algorithm functions
@@ -214,12 +233,15 @@ void Drone::PositionControl(){
     uavVrpn->GetPosition(uav_p);
     uavVrpn->GetSpeed(uav_dp);
 
-    MixOrientation();
-    q = mixQuaternion;
-    w = mixAngSpeed;
+    // MixOrientation();
+    // q = mixQuaternion;
+    // w = mixAngSpeed;
 
     myLaw->SetRejectionPercent(rejectionPercent);
     myLaw->SetTarget(aim_p, aim_dp, aim_yaw);
+
+    myLaw->UpdateTranslationControl(uav_p, uav_dp, q);
+    myLaw->UpdateThrustControl(uav_p, uav_dp);
     // myLaw->UpdateDynamics(uav_p, uav_dp, q, w);
     // myLaw->Update(GetTime());
 }

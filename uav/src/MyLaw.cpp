@@ -88,8 +88,11 @@ void MyLaw::UpdateTranslationControl(Vector3Df& current_p, Vector3Df &current_dp
     uY_custom->Update(GetTime());
 }
 
-void MyLaw::UpdateThrustControl(Vector3Df& current_p ,Vector3Df &aim_p, Vector3Df &current_dp, Vector3Df &aim_dp, Quaternion current_q){
-
+void MyLaw::UpdateThrustControl(Vector3Df& current_p , Vector3Df &current_dp){
+    Vector3Df pos_err = current_p - p_d;
+    Vector3Df vel_err = current_dp - Vector3Df(0,0,0);
+    uZ_custom->SetValues(pos_err.z, vel_err.z);
+    uZ_custom->Update(GetTime());
 }
 
 

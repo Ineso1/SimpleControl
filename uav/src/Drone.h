@@ -36,6 +36,8 @@ protected:
     std::chrono::high_resolution_clock::time_point previous_chrono_time_sequence;
     float sequenceTime;
     bool sequenceFirstTime;
+    float refAltitude;
+    float refVerticalVelocity;
 
     // Perturbation Toggle
     bool perturbation;
@@ -68,6 +70,7 @@ protected:
     float ComputeCustomThrust() override;
     const flair::core::AhrsData *GetOrientation(void) const override;
     flair::core::AhrsData *GetReferenceOrientation(void) override;
+    void AltitudeValues(float &z,float &dz) const override;
 
     // Control behave algorithm functions
     void PositionControl(void);

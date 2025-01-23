@@ -91,7 +91,7 @@ SimpleControl::~SimpleControl() {
 
 const AhrsData *SimpleControl::GetOrientation(void) const {
     //get yaw from vrpn
-		Quaternion vrpnQuaternion;
+    Quaternion vrpnQuaternion;
     uavVrpn->GetQuaternion(vrpnQuaternion);
 
     //get roll, pitch and w from imu
