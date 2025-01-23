@@ -84,6 +84,8 @@ SimpleControl::SimpleControl(TargetController *controller): UavStateMachine(cont
 
     refAltitude = 1;
     refVerticalVelocity = 0;
+
+    
 }
 
 SimpleControl::~SimpleControl() {

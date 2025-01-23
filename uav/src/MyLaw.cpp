@@ -54,7 +54,50 @@ MyLaw::~MyLaw(void) {
 /***********************
 MY CONTROL CHIDO >:v
 ************************/
-void MyLaw::UpdateFrom(const io_data *data) {
+
+
+void MyLaw::UpdateTranslationControl(Vector3Df& current_p, Vector3Df &current_dp, Quaternion current_q){
+        
+    Vector3Df pos_err = current_p - p_d;
+    Vector3Df vel_err = current_dp - Vector3Df(0,0,0);
+
+
+
+    Euler currentAngles;//in vrpn frame
+    current_q.ToEuler(currentAngles);
+    pos_err.Rotate(-currentAngles.yaw);
+    vel_err.Rotate(-currentAngles.yaw);
+
+    // std::cout<<"aim "<< "\t" << current_q.q0 << "\t" << current_q.q1 << "\t" << current_q.q2 << "\t" << current_q.q3 << "\n";
+    // std::cout<<"aim "<< "\t" << currentAngles.roll << "\t" << currentAngles.pitch << "\t" << currentAngles.yaw << "\n";
+    // std::cout<<"aim "<< "\t" << currentAngles.roll << "\t" << currentAngles.pitch << "\t" << currentAngles.yaw << "\n";
+    
+    std::cout<<"aim "<< pos_err.x << "\t" << pos_err.y << "\t\n";
+    // std::cout<<"vel "<< vel_err.x << "\t" << vel_err.y <<std::endl;
+
+
+    uX_custom->SetValues(pos_err.x, vel_err.x);
+    uX_custom->Update(GetTime());
+
+    uY_custom->SetValues(pos_err.y, vel_err.y);
+    uY_custom->Update(GetTime());
+}
+
+void MyLaw::UpdateThrustControl(Vector3Df& current_p , Vector3Df &current_dp){
+    Vector3Df pos_err = -current_p - p_d;
+    Vector3Df vel_err = -current_dp - Vector3Df(0,0,0);
+    uZ_custom->SetValues(pos_err.z, vel_err.z);
+    uZ_custom->Update(GetTime());
+}
+
+
+void MyLaw::Reset(void) {
+    p_d.x = 0;
+    p_d.y = 0;
+    p_d.z = 0;
+}
+
+void MyLaw::CalculateControl() {
     if(firstUpdate){
         previous_chrono_time = std::chrono::high_resolution_clock::now();
     }
@@ -69,41 +112,6 @@ void MyLaw::UpdateFrom(const io_data *data) {
 
 
     firstUpdate = false;
-}
-
-
-void MyLaw::UpdateTranslationControl(Vector3Df& current_p, Vector3Df &current_dp, Quaternion current_q){
-    Vector3Df pos_err = current_p - p_d;
-    Vector3Df vel_err = current_dp - Vector3Df(0,0,0);
-
-    Euler currentAngles;//in vrpn frame
-    current_q.ToEuler(currentAngles);
-    pos_err.Rotate(-currentAngles.yaw);
-    vel_err.Rotate(-currentAngles.yaw);
-
-    uX_custom->SetValues(pos_err.x, vel_err.x);
-    uX_custom->Update(GetTime());
-
-    uY_custom->SetValues(pos_err.y, vel_err.y);
-    uY_custom->Update(GetTime());
-}
-
-void MyLaw::UpdateThrustControl(Vector3Df& current_p , Vector3Df &current_dp){
-    Vector3Df pos_err = current_p - p_d;
-    Vector3Df vel_err = current_dp - Vector3Df(0,0,0);
-    uZ_custom->SetValues(pos_err.z, vel_err.z);
-    uZ_custom->Update(GetTime());
-}
-
-
-void MyLaw::Reset(void) {
-    p_d.x = 0;
-    p_d.y = 0;
-    p_d.z = 0;
-}
-
-void MyLaw::CalculateControl(float dt) {
-    
     
 }
 

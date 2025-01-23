@@ -38,6 +38,7 @@ protected:
     bool sequenceFirstTime;
     float refAltitude;
     float refVerticalVelocity;
+    float yawHold;
 
     // Perturbation Toggle
     bool perturbation;

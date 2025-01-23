@@ -138,11 +138,10 @@ namespace filter {
         ///////////////////////////
         // MA CONTROL ALGO
         /////////////////////////// 
-        void UpdateFrom(const io_data *data);
         void UpdateTranslationControl(Vector3Df& current_p , Vector3Df &current_dp, Quaternion current_q);
         void UpdateThrustControl(Vector3Df& current_p , Vector3Df &current_dp);
 
-        void CalculateControl(float dt);
+        void CalculateControl();
                 
         ///////////////////////////
         // UPDATE DYNAMIC VARS

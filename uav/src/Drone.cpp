@@ -26,6 +26,9 @@ Drone::Drone(TargetController *controller) : DroneBase(controller) {
 
     refAltitude = 1;
     refVerticalVelocity = 0;
+    yawHold=vrpnQuaternion.ToEuler().yaw;
+
+    myLaw->SetTarget(Vector3Df(0,0,refAltitude), Vector3Df(0,0,0), Quaternion(1,0,0,0));
 }
 
 Drone::~Drone() {
@@ -155,9 +158,8 @@ float Drone::ComputeCustomThrust() {
     float thrust = 0;
     uavVrpn->GetPosition(p);
     uavVrpn->GetSpeed(dp);
-    myLaw->UpdateThrustControl(p, dp);
+    PositionControl();
     thrust = myLaw->uZ_custom->Output();
-    std::cout<<thrust<<std::endl;
     return thrust;
 }
 
@@ -193,7 +195,7 @@ AhrsData *Drone::GetReferenceOrientation(void) {
     uavVrpn->GetSpeed(uav_dp);
     uav_q = GetCurrentQuaternion();
 
-    yaw_ref = 0;
+    yaw_ref = yawHold;
     refAngles.yaw=yaw_ref;
 
     myLaw->UpdateTranslationControl(uav_p, uav_dp, uav_q);
