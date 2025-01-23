@@ -66,6 +66,8 @@ protected:
 
     // Control inputs
     float ComputeCustomThrust() override;
+    const flair::core::AhrsData *GetOrientation(void) const override;
+    flair::core::AhrsData *GetReferenceOrientation(void) override;
 
     // Control behave algorithm functions
     void PositionControl(void);
@@ -78,6 +80,7 @@ private:
     Vector3Df mixAngSpeed;
     Quaternion qI;
     bool first_up = true;
+    flair::core::AhrsData *customReferenceOrientation,*customOrientation;
 };
 
 #endif // DRONE_H

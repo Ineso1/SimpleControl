@@ -139,6 +139,9 @@ namespace filter {
         // MA CONTROL ALGO
         /////////////////////////// 
         void UpdateFrom(const io_data *data);
+        void UpdateTranslationControl(Vector3Df& current_p , Vector3Df &current_dp, Quaternion current_q);
+        void UpdateThrustControl(Vector3Df& current_p ,Vector3Df &aim_p, Vector3Df &current_dp, Vector3Df &aim_dp, Quaternion current_q);
+
         void CalculateControl(float dt);
                 
         ///////////////////////////
