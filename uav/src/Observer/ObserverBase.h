@@ -5,7 +5,7 @@
 #include <string>
 #include <iomanip>
 #include <fstream>
-
+#include "../Control/Flags.h"
 
 namespace Observer {
 class ObserverBase {

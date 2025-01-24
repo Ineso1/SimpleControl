@@ -4,7 +4,7 @@ namespace Observer {
 
 ObserverBase::ObserverBase() {
 
-    #ifdef PARAMSIM_H
+    #ifdef SAVE_STATE_ESTIMATION_CSV
 
         disturbanceTranslationFilePath = DISTURBANCE_TRANSLATIONAL_FILE_PATH;
         disturbanceRotationFilePath = DISTURBANCE_ROTATIONAL_FILE_PATH;

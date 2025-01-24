@@ -26,8 +26,11 @@
 #include <Pid.h>
 #include <PidThrust.h>
 #include <IODevice.h>
-
-// #include "../Observer/UDE/UDE.h"
+#include "../Observer/UDE/UDE.h"
+#include "../Observer/Luenberger/Luenberger.h"
+#include "../Observer/SlidingMode/SlidingMode.h"
+#include "../Observer/SuperTwist/SuperTwist.h"
+#include <Eigen/Dense>
 
 using namespace std;
 using std::string;
@@ -64,9 +67,14 @@ namespace filter {
 
         Vector3Df p_d;    // Desire position
 
-        float Fu;
-        Vector3Df Tauu;
         float motorK;
+        float g;
+        float mass;
+        Vector3Df u_thrust;
+        Vector3Df u_torque;
+
+        Vector3Df w_estimation_trans;
+        Vector3Df w_estimation_rot;
 
         Vector3Df perturbation_trans;
         Vector3Df perturbation_rot;
@@ -82,7 +90,11 @@ namespace filter {
 
         Matrix *stateM, *dataexp, *input; // Description Matrix
 
-        
+        Observer::UDE ude;
+        Observer::Luenberger luenberger;
+        Observer::SlidingMode slidingMode;
+        Observer::SuperTwist superTwist;
+
 
         ~MyLaw(void);
         MyLaw(const LayoutPosition* position,std::string name);
@@ -98,9 +110,9 @@ namespace filter {
         ///////////////////////////
         // MA CONTROL ALGO
         /////////////////////////// 
-        void UpdateTranslationControl(Vector3Df& current_p , Vector3Df &current_dp, Quaternion current_q);
+        void UpdateTranslationControl(Vector3Df& current_p , Vector3Df &current_dp, Quaternion &current_q);
         void UpdateThrustControl(Vector3Df& current_p , Vector3Df &current_dp);
-        void CalculateControl();
+        void CalculateControl(Vector3Df& current_p , Vector3Df &current_dp, Quaternion &current_q, Vector3Df &current_omega);
                 
         ///////////////////////////
         // UPDATE DYNAMIC VARS

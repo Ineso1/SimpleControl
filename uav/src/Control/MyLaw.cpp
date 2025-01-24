@@ -14,6 +14,14 @@ MyLaw::MyLaw(const LayoutPosition* position, string name) {
     rejectionPercent = Vector3Df(0,0,0);
     rejectionRotPercent = Vector3Df(0,0,0);
 
+    Vector3Df w_estimation_trans(0,0,0);
+    Vector3Df w_estimation_rot(0,0,0);
+
+    Vector3Df u_thrust(0,0,0);
+    Vector3Df u_torque(0,0,0);
+    observerMode = MyLaw::ObserverMode_t::UDE;
+    mass = 0.445;
+    g = 9.81;
 
     /************************
     Logs???
@@ -75,7 +83,7 @@ MyLaw::~MyLaw(void) {
     }
 }
 
-void MyLaw::UpdateTranslationControl(Vector3Df& current_p, Vector3Df &current_dp, Quaternion current_q){
+void MyLaw::UpdateTranslationControl(Vector3Df& current_p, Vector3Df &current_dp, Quaternion &current_q){
     Vector3Df pos_err = current_p - p_d;
     Vector3Df vel_err = current_dp - Vector3Df(0,0,0);
     pos_err.Rotate(-current_q);
@@ -99,22 +107,65 @@ void MyLaw::Reset(void) {
     p_d.z = 0;
 }
 
-void MyLaw::CalculateControl() {
+void MyLaw::CalculateControl(Vector3Df& current_p , Vector3Df &current_dp, Quaternion &current_q, Vector3Df &current_omega) {
+    Eigen::Vector3f w_estimation_trans_eig;
+    Eigen::Vector3f w_estimation_rot_eig;
+    mass = mass_layout->Value();
+    
     if(firstUpdate){
         previous_chrono_time = std::chrono::high_resolution_clock::now();
     }
-    
-    // dt Calc
     float dt;
     auto current_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<float> alt_dt = current_time - previous_chrono_time;
     dt = alt_dt.count();
     previous_chrono_time = current_time;
+    if(firstUpdate){
+        dt = 0;
+    }
 
+    float thrust = uZ_custom->Output();
+    u_thrust = Vector3Df(0,0,thrust);
 
+    if(observerMode == MyLaw::ObserverMode_t::UDE){
+        ude.u_thrust = Eigen::Vector3f(u_thrust.x, u_thrust.y, u_thrust.z);
+        ude.u_torque = Eigen::Vector3f(u_torque.x, u_torque.y, u_torque.z);
+        w_estimation_trans_eig = ude.EstimateDisturbance_trans(Eigen::Vector3f(current_p.x, current_p.y, current_p.z), Eigen::Vector3f(current_dp.x, current_dp.y, current_dp.z), dt);
+        // w_estimation_rot_eig = ude.EstimateDisturbance_rot(Eigen::Quaternionf(current_q.q0, current_q.q1, current_q.q2, current_q.q3), Eigen::Vector3f(current_omega), dt);
+    } else if(observerMode == MyLaw::ObserverMode_t::Luenberger){
+        luenberger.u_thrust = Eigen::Vector3f(u_thrust.x, u_thrust.y, u_thrust.z);
+        luenberger.u_torque = Eigen::Vector3f(u_torque.x, u_torque.y, u_torque.z);
+        w_estimation_trans_eig = luenberger.EstimateDisturbance_trans(Eigen::Vector3f(current_p.x, current_p.y, current_p.z), Eigen::Vector3f(current_dp.x, current_dp.y, current_dp.z), dt);
+        // w_estimation_rot_eig = luenberger.EstimateDisturbance_rot(Eigen::Quaternionf(current_q.q0, current_q.q1, current_q.q2, current_q.q3), Eigen::Vector3f(current_omega), dt);
+    } else if(observerMode == MyLaw::ObserverMode_t::SuperTwist){
+        superTwist.u_thrust = Eigen::Vector3f(u_thrust.x, u_thrust.y, u_thrust.z);
+        superTwist.u_torque = Eigen::Vector3f(u_torque.x, u_torque.y, u_torque.z);
+        w_estimation_trans_eig = superTwist.EstimateDisturbance_trans(Eigen::Vector3f(current_p.x, current_p.y, current_p.z), Eigen::Vector3f(current_dp.x, current_dp.y, current_dp.z), dt);
+        // w_estimation_rot_eig = superTwist.EstimateDisturbance_rot(Eigen::Quaternionf(current_q.q0, current_q.q1, current_q.q2, current_q.q3), Eigen::Vector3f(current_omega), dt);
+    }else if(observerMode == MyLaw::ObserverMode_t::SlidingMode){
+        slidingMode.u_thrust = Eigen::Vector3f(u_thrust.x, u_thrust.y, u_thrust.z);
+        slidingMode.u_torque = Eigen::Vector3f(u_torque.x, u_torque.y, u_torque.z);
+        w_estimation_trans_eig = slidingMode.EstimateDisturbance_trans(Eigen::Vector3f(current_p.x, current_p.y, current_p.z), Eigen::Vector3f(current_dp.x, current_dp.y, current_dp.z), dt);
+        // w_estimation_rot_eig = slidingMode.EstimateDisturbance_rot(Eigen::Quaternionf(current_q.q0, current_q.q1, current_q.q2, current_q.q3), Eigen::Vector3f(current_omega), dt);
+    }
+    w_estimation_trans_eig = w_estimation_trans_eig - Eigen::Vector3f(0,0, g * mass);
+
+    std::cout<< "est\t" << w_estimation_trans_eig <<std::endl;
+    
+    w_estimation_trans = Vector3Df(w_estimation_trans_eig.x(),w_estimation_trans_eig.y(),w_estimation_trans_eig.z());
+    w_estimation_rot = Vector3Df(w_estimation_rot_eig.x(),w_estimation_rot_eig.y(),w_estimation_rot_eig.z());
+    if(!isDisturbanceActive){
+        w_estimation_trans = Vector3Df(0,0,0); 
+    }
+
+    if(!isDisturbanceRotActive){
+        w_estimation_rot = Vector3Df(0,0,0);
+    }
+
+    UpdateTranslationControl(current_p, current_dp, current_q);
+    UpdateThrustControl(current_p, current_dp);
 
     firstUpdate = false;
-    
 }
 
 

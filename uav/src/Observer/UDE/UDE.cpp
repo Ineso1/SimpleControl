@@ -15,18 +15,6 @@ UDE::UDE() {
     x_rot = Eigen::VectorXf::Zero(6);
     dx_trans = Eigen::VectorXf::Zero(6);
     dx_rot = Eigen::VectorXf::Zero(6);
-    #ifdef PARAMSIM_H
-        debugFilePath_trans = SAVE_UDE_TRANS_DEBUG_FILE_PATH_CSV;
-        debugOutputFile_trans.open(debugFilePath_trans, std::ios::trunc);
-        if (debugOutputFile_trans.is_open()) {
-            debugOutputFile_trans << "dt,xi_x,xi_y,xi_z,dot_xi_x,dot_xi_y,dot_xi_z\n";
-        }
-        debugFilePath_rot = SAVE_UDE_ROT_DEBUG_FILE_PATH_CSV;
-        debugOutputFile_rot.open(debugFilePath_rot, std::ios::trunc);
-        if (debugOutputFile_rot.is_open()) {
-            debugOutputFile_rot << "dt,xi_x,xi_y,xi_z,dot_xi_x,dot_xi_y,dot_xi_z\n";
-        }
-    #endif
     initialize(); 
 }
 
@@ -57,9 +45,6 @@ Eigen::Vector3f UDE::EstimateDisturbance_trans(const Eigen::Vector3f& p, const E
     #ifdef SAVE_STATE_ESTIMATION_CSV
         SaveStateEstimationCSV(x_trans, dx_trans, w_hat_trans, "TranslationalEstimation.csv");
     #endif
-    #ifdef SAVE_UDE_DEBUG_CSV
-        SaveUDEDebugCSV(u_thrust, xi_dot_trans, dt, "trans");
-    #endif
     return w_hat_trans;
 }
 
@@ -85,9 +70,6 @@ Eigen::Vector3f UDE::EstimateDisturbance_rot(const Eigen::Quaternionf& q, const 
     x_rot += dt * dx_rot;
     #ifdef SAVE_STATE_ESTIMATION_CSV
         SaveStateEstimationCSV(x_rot, dx_rot, w_hat_rot, "RotationalEstimation.csv");
-    #endif
-    #ifdef SAVE_UDE_DEBUG_CSV
-        SaveUDEDebugCSV(xi_UDE_rot, xi_dot_rot, dt, "rot");
     #endif
     return w_hat_rot;
 }

@@ -159,7 +159,10 @@ float Drone::ComputeCustomThrust() {
     uavVrpn->GetPosition(p);
     uavVrpn->GetSpeed(dp);
     PositionControl();
-    thrust = myLaw->uZ_custom->Output();
+    float perturbation_z = myLaw->perturbation_trans.z;
+    float w_estimated = myLaw->w_estimation_trans.z;
+
+    thrust = myLaw->uZ_custom->Output() + perturbation_z - w_estimated;
     return thrust;
 }
 
@@ -238,8 +241,7 @@ void Drone::PositionControl(){
     myLaw->SetRejectionPercent(rejectionPercent);
     myLaw->SetTarget(aim_p, aim_dp, aim_yaw);
 
-    myLaw->UpdateTranslationControl(uav_p, uav_dp, q);
-    myLaw->UpdateThrustControl(uav_p, uav_dp);
+    myLaw->CalculateControl(uav_p, uav_dp, q, w);
     myLaw->UpdateDynamics(uav_p, uav_dp, q, w);
 }
 

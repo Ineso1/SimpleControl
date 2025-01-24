@@ -2,6 +2,7 @@
 #define UDE_H
 
 #include "../ObserverBase.h"
+#include "../../Control/Flags.h"
 #include <Eigen/Dense>
 #include <string>
 #include <iomanip>
