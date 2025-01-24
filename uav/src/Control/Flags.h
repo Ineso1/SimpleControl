@@ -1,9 +1,10 @@
 #ifndef FLAGS_H
 #define FLAGS_H
 
-#define CSV_STATE
-#define SAVE_ERRORS_CSV
-#define SAVE_STATE_ESTIMATION_CSV
+// #define CSV_STATE
+// #define SAVE_ERRORS_CSV
+// #define SAVE_STATE_ESTIMATION_CSV
+// #define SAVE_REAL_STATE_SPACE_CSV
 
 #define UDE_OBSERVER 1
 #define LUENBERGER_OBSERVER 2

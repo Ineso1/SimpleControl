@@ -37,10 +37,10 @@ Eigen::Vector3f UDE::EstimateDisturbance_trans(const Eigen::Vector3f& p, const E
     xi_dot_trans = -Omega_UDE_trans * xi_UDE_trans
                  - (Omega_UDE_trans * Omega_UDE_trans * (B_pinv_trans * x_t))
                  + Omega_UDE_trans * (B_pinv_trans * (A_trans * x_t))
-                 - Omega_UDE_trans * (u_thrust - Eigen::Vector3f(0, 0, g * mass));
+                 - Omega_UDE_trans * (u_thrust - 0*Eigen::Vector3f(0, 0, g * mass /10));
     xi_UDE_trans += dt * xi_dot_trans;
     w_hat_trans = xi_UDE_trans + Omega_UDE_trans * (B_pinv_trans * x_t);
-    dx_trans = A_trans * x_t + B_trans * (u_thrust - Eigen::Vector3f(0, 0, g * mass)) + B_trans * w_hat_trans;
+    dx_trans = A_trans * x_t + B_trans * (u_thrust - 0*Eigen::Vector3f(0, 0, g * mass /10)) + B_trans * w_hat_trans;
     x_trans = x_t;
     #ifdef SAVE_STATE_ESTIMATION_CSV
         SaveStateEstimationCSV(x_trans, dx_trans, w_hat_trans, "TranslationalEstimation.csv");

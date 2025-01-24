@@ -75,6 +75,15 @@ MyLaw::MyLaw(const LayoutPosition* position, string name) {
         errorsOutputFileCSV.open(errorsFilePath, std::ios::trunc);
         errorsOutputFileCSV    << "ep_x,ep_y,ep_z,eq_w,eq_x,eq_y,eq_z,dt\n";
     #endif
+    #ifdef SAVE_REAL_STATE_SPACE_CSV
+        translationFilePath = TRANSLATION_FILE_PATH_CSV;
+        rotationFilePath = ROTATION_FILE_PATH_CSV;
+        translationOutputFileCSV.open(translationFilePath, std::ios::trunc);
+        rotationOutputFileCSV.open(rotationFilePath, std::ios::trunc);
+        translationOutputFileCSV    << "p_x,p_y,p_z,dp_x,dp_y,dp_z,ddp_x,ddp_y,ddp_z,dt\n";
+        rotationOutputFileCSV       << "domega_x,domega_y,domega_z,omega_x,omega_y,omega_z,"
+                                    << "dq_w,dq_x,dq_y,dq_z,q_w,q_x,q_y,q_z,dt\n";
+    #endif
 }
 
 MyLaw::~MyLaw(void) {
@@ -85,6 +94,7 @@ MyLaw::~MyLaw(void) {
 
 void MyLaw::UpdateTranslationControl(Vector3Df& current_p, Vector3Df &current_dp, Quaternion &current_q){
     Vector3Df pos_err = current_p - p_d;
+    std::cout<<"errZ "<< current_p.z << std::endl;
     Vector3Df vel_err = current_dp - Vector3Df(0,0,0);
     pos_err.Rotate(-current_q);
     vel_err.Rotate(-current_q);
@@ -123,6 +133,8 @@ void MyLaw::CalculateControl(Vector3Df& current_p , Vector3Df &current_dp, Quate
     if(firstUpdate){
         dt = 0;
     }
+    std::cout<<dt<<std::endl;
+
 
     float thrust = uZ_custom->Output();
     u_thrust = Vector3Df(0,0,thrust);
@@ -148,7 +160,6 @@ void MyLaw::CalculateControl(Vector3Df& current_p , Vector3Df &current_dp, Quate
         w_estimation_trans_eig = slidingMode.EstimateDisturbance_trans(Eigen::Vector3f(current_p.x, current_p.y, current_p.z), Eigen::Vector3f(current_dp.x, current_dp.y, current_dp.z), dt);
         // w_estimation_rot_eig = slidingMode.EstimateDisturbance_rot(Eigen::Quaternionf(current_q.q0, current_q.q1, current_q.q2, current_q.q3), Eigen::Vector3f(current_omega), dt);
     }
-    w_estimation_trans_eig = w_estimation_trans_eig - Eigen::Vector3f(0,0, g * mass);
 
     w_estimation_trans = Vector3Df(w_estimation_trans_eig.x(),w_estimation_trans_eig.y(),w_estimation_trans_eig.z());
     w_estimation_rot = Vector3Df(w_estimation_rot_eig.x(),w_estimation_rot_eig.y(),w_estimation_rot_eig.z());
@@ -163,6 +174,13 @@ void MyLaw::CalculateControl(Vector3Df& current_p , Vector3Df &current_dp, Quate
     UpdateTranslationControl(current_p, current_dp, current_q);
     UpdateThrustControl(current_p, current_dp);
 
+    Vector3Df nada (0,0,0);
+    Quaternion nadaQ (0,0,0);
+
+    #ifdef SAVE_REAL_STATE_SPACE_CSV
+        SaveStateCSV(current_p, current_dp, nada, nada, current_omega, nadaQ, current_q, dt); 
+    #endif
+
     firstUpdate = false;
 }
 
@@ -175,6 +193,25 @@ void MyLaw::SaveErrorsCSV(Vector3Df &ep, Quaternion &eq, float &dt){
                                     << eq.q0 << "," << eq.q1 << "," << eq.q2 << "," << eq.q3 << "," << dt << "\n";
     } else {
         std::cerr << "Error opening Errors.csv\n";
+    }
+}
+
+void MyLaw::SaveStateCSV(Vector3Df &p, Vector3Df &dp,Vector3Df &ddp, Vector3Df &domega, Vector3Df &omega, Quaternion &dq, Quaternion &q, float &dt){
+    if (translationOutputFileCSV.is_open()) {
+        translationOutputFileCSV    << std::fixed << std::setprecision(6)
+                                    << p.x << "," << p.y << "," << p.z << ","
+                                    << dp.x << "," << dp.y << "," << dp.z << ","
+                                    << ddp.x << "," << ddp.y << "," << ddp.z << "," << dt << "\n";
+    } else {
+        std::cerr << "Error opening RealStateSpace_trans.csv\n";
+    }
+    if (rotationOutputFileCSV.is_open()) {
+        rotationOutputFileCSV   << domega.x << "," << domega.y << "," << domega.z << ","
+                                << omega.x << "," << omega.y << "," << omega.z << ","
+                                << dq.q0 << "," << dq.q1 << "," << dq.q2 << "," << dq.q3 << ","
+                                << q.q0 << "," << q.q1 << "," << q.q2 << "," << q.q3 << "," << dt << "\n";
+    } else {
+        std::cerr << "Error opening RealStateSpace_rot.csv\n";
     }
 }
 

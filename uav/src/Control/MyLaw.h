@@ -87,6 +87,10 @@ namespace filter {
 
         std::ofstream errorsOutputFileCSV;
         std::string errorsFilePath;
+        std::ofstream translationOutputFileCSV;
+        std::string translationFilePath; 
+        std::ofstream rotationOutputFileCSV;
+        std::string rotationFilePath;
 
         Matrix *stateM, *dataexp, *input; // Description Matrix
 
@@ -126,7 +130,7 @@ namespace filter {
         /////////////////////////// 
 
         void SaveErrorsCSV(Vector3Df &ep, Quaternion &eq, float &dt);
-
+        void SaveStateCSV(Vector3Df &p, Vector3Df &dp,Vector3Df &ddp, Vector3Df &domega, Vector3Df &omega, Quaternion &dq, Quaternion &q, float &dt);
     };
 }
 }

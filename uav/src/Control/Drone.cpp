@@ -164,7 +164,7 @@ float Drone::ComputeCustomThrust() {
         
     std::cout<< "est\t" << w_estimated << "\t" << perturbation_z <<std::endl;
 
-    thrust = myLaw->uZ_custom->Output() + perturbation_z - w_estimated;
+    thrust = myLaw->uZ_custom->Output() - (myLaw->mass * myLaw->g)/10 + perturbation_z - w_estimated;
     return thrust;
 }
 
