@@ -150,8 +150,6 @@ void MyLaw::CalculateControl(Vector3Df& current_p , Vector3Df &current_dp, Quate
     }
     w_estimation_trans_eig = w_estimation_trans_eig - Eigen::Vector3f(0,0, g * mass);
 
-    std::cout<< "est\t" << w_estimation_trans_eig <<std::endl;
-    
     w_estimation_trans = Vector3Df(w_estimation_trans_eig.x(),w_estimation_trans_eig.y(),w_estimation_trans_eig.z());
     w_estimation_rot = Vector3Df(w_estimation_rot_eig.x(),w_estimation_rot_eig.y(),w_estimation_rot_eig.z());
     if(!isDisturbanceActive){
