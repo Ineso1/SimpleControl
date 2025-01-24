@@ -25,7 +25,9 @@
 #include <iomanip>
 #include <Pid.h>
 #include <PidThrust.h>
+#include <IODevice.h>
 
+// #include "../Observer/UDE/UDE.h"
 
 using namespace std;
 using std::string;
@@ -46,16 +48,9 @@ namespace filter {
         enum class ObserverMode_t { UDE, Luenberger, SuperTwist, SlidingMode };
         ObserverMode_t observerMode;
 
-
-        // Flags
         bool isDisturbanceActive; // Flag for disturbance activation
         bool isDisturbanceRotActive; // Flag for disturbance rotational activation
         bool isKalmanActive;
-
-
-        ///////////////////////////
-        // LAYOUT GAINS AND PARAMS
-        ///////////////////////////
 
         flair::filter::Pid *uX_custom, *uY_custom;
         flair::filter::PidThrust *uZ_custom;
@@ -63,66 +58,31 @@ namespace filter {
         // Layout drone properties
         DoubleSpinBox *mass_layout;
                 
-        // Layout UDE Gain
         Vector3DSpinBox *omega_gains_trans;
         Vector3DSpinBox *omega_gains_rot;
-
-        // Motor constant
         DoubleSpinBox *motorConst;
-                
-        ///////////////////////////
-        // TARGET VARS
-        ///////////////////////////
 
         Vector3Df p_d;    // Desire position
-
-        ///////////////////////////
-        // CONTROL INPUTS
-        ///////////////////////////
 
         float Fu;
         Vector3Df Tauu;
         float motorK;
 
-        ///////////////////////////
-        // PERTURBATIONS
-        ///////////////////////////
-
-        // Perturbations
         Vector3Df perturbation_trans;
         Vector3Df perturbation_rot;
-
         Vector3Df rejectionPercent;
         Vector3Df rejectionRotPercent;
                 
-        // Custom time conditions
         bool firstUpdate;
 
-        ///////////////////////////
-        // TIME
-        ///////////////////////////
-                
         std::chrono::high_resolution_clock::time_point previous_chrono_time;
 
-        ///////////////////////////
-        // CSV HANDLERS
-        ///////////////////////////
-
-    
         std::ofstream errorsOutputFileCSV;
         std::string errorsFilePath;
 
-            
-        ///////////////////////////
-        // DYNAMIC VARIABLES MATRIX
-        ///////////////////////////
-
         Matrix *stateM, *dataexp, *input; // Description Matrix
 
-                
-        ///////////////////////////
-        // CONSTRUCTOR
-        ///////////////////////////
+        
 
         ~MyLaw(void);
         MyLaw(const LayoutPosition* position,std::string name);
@@ -140,7 +100,6 @@ namespace filter {
         /////////////////////////// 
         void UpdateTranslationControl(Vector3Df& current_p , Vector3Df &current_dp, Quaternion current_q);
         void UpdateThrustControl(Vector3Df& current_p , Vector3Df &current_dp);
-
         void CalculateControl();
                 
         ///////////////////////////

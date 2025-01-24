@@ -14,29 +14,54 @@ MyLaw::MyLaw(const LayoutPosition* position, string name) {
     rejectionPercent = Vector3Df(0,0,0);
     rejectionRotPercent = Vector3Df(0,0,0);
 
-    /***********************
-    WEIGHT LAYOUT
+
+    /************************
+    Logs???
     ************************/
+    input = new Matrix(position->getLayout(),23,1,floatType,name);
+    MatrixDescriptor* desc = new MatrixDescriptor(23,1);
+    desc->SetElementName(0,0,"q0");
+    desc->SetElementName(1,0,"q1");
+    desc->SetElementName(2,0,"q2");
+    desc->SetElementName(3,0,"q3");
+    desc->SetElementName(4,0,"wx");
+    desc->SetElementName(5,0,"wy");
+    desc->SetElementName(6,0,"wz");
+    desc->SetElementName(7,0,"px");
+    desc->SetElementName(8,0,"py");
+    desc->SetElementName(9,0,"pz");
+    desc->SetElementName(10,0,"u_roll");
+    desc->SetElementName(11,0,"u_pitch");
+    desc->SetElementName(12,0,"u_yaw");
+    desc->SetElementName(13,0,"thrust");
+    desc->SetElementName(14,0,"ecx");
+    desc->SetElementName(15,0,"ecy");
+    desc->SetElementName(16,0,"ecz");
+    desc->SetElementName(17,0,"udeTx");
+    desc->SetElementName(18,0,"udeTy");
+    desc->SetElementName(19,0,"udeTz");
+    desc->SetElementName(20,0,"udeRx");
+    desc->SetElementName(21,0,"udeRy");
+    desc->SetElementName(22,0,"udeRz");
+
+    dataexp = new Matrix(position->getLayout(),desc,floatType,name);
+    delete desc;
+    // AddDataToLog(dataexp);
+
 
     perturbation_trans = Vector3Df(0,0,0);
     perturbation_rot = Vector3Df(0,0,0);
-
     GroupBox* customPID_groupbox = new GroupBox(position,name);
-
     uX_custom = new Pid(customPID_groupbox->At(1,0),"u_x_custom");
     uY_custom = new Pid(customPID_groupbox->At(1,1),"u_y_custom");
     uZ_custom = new PidThrust(customPID_groupbox->At(1,3), "u_z_custom");
-
-
     omega_gains_rot = new Vector3DSpinBox(customPID_groupbox->NewRow(),"omegaUDE_rot",0,100,0.01,3,Vector3Df(80.0,80.0,80.0));
     omega_gains_trans = new Vector3DSpinBox(customPID_groupbox->NewRow(),"omegaUDE_trans",0,100,0.01,3,Vector3Df(60.0,60.0,60.0));
-    
     mass_layout = new DoubleSpinBox(customPID_groupbox->NewRow(),"Massa que mas aplauda",0.1,10,0.001,3,0.405);
     motorConst = new DoubleSpinBox(customPID_groupbox->NewRow(),"Motor const",0,20,0.0001,10,10);
 
-    /***********************
-    CSV write instances
-    ************************/
+    
+
     #ifdef SAVE_ERRORS_CSV
         errorsFilePath = ERRRORS_FILE_PATH_CSV;
         errorsOutputFileCSV.open(errorsFilePath, std::ios::trunc);
@@ -50,35 +75,13 @@ MyLaw::~MyLaw(void) {
     }
 }
 
-
-/***********************
-MY CONTROL CHIDO >:v
-************************/
-
-
 void MyLaw::UpdateTranslationControl(Vector3Df& current_p, Vector3Df &current_dp, Quaternion current_q){
-        
     Vector3Df pos_err = current_p - p_d;
     Vector3Df vel_err = current_dp - Vector3Df(0,0,0);
-
-
-
-    Euler currentAngles;//in vrpn frame
-    current_q.ToEuler(currentAngles);
-    pos_err.Rotate(-currentAngles.yaw);
-    vel_err.Rotate(-currentAngles.yaw);
-
-    // std::cout<<"aim "<< "\t" << current_q.q0 << "\t" << current_q.q1 << "\t" << current_q.q2 << "\t" << current_q.q3 << "\n";
-    // std::cout<<"aim "<< "\t" << currentAngles.roll << "\t" << currentAngles.pitch << "\t" << currentAngles.yaw << "\n";
-    // std::cout<<"aim "<< "\t" << currentAngles.roll << "\t" << currentAngles.pitch << "\t" << currentAngles.yaw << "\n";
-    
-    std::cout<<"aim "<< pos_err.x << "\t" << pos_err.y << "\t\n";
-    // std::cout<<"vel "<< vel_err.x << "\t" << vel_err.y <<std::endl;
-
-
+    pos_err.Rotate(-current_q);
+    vel_err.Rotate(-current_q);
     uX_custom->SetValues(pos_err.x, vel_err.x);
     uX_custom->Update(GetTime());
-
     uY_custom->SetValues(pos_err.y, vel_err.y);
     uY_custom->Update(GetTime());
 }
@@ -89,7 +92,6 @@ void MyLaw::UpdateThrustControl(Vector3Df& current_p , Vector3Df &current_dp){
     uZ_custom->SetValues(pos_err.z, vel_err.z);
     uZ_custom->Update(GetTime());
 }
-
 
 void MyLaw::Reset(void) {
     p_d.x = 0;

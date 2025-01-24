@@ -28,7 +28,7 @@ Drone::Drone(TargetController *controller) : DroneBase(controller) {
     refVerticalVelocity = 0;
     yawHold=vrpnQuaternion.ToEuler().yaw;
 
-    myLaw->SetTarget(Vector3Df(0,0,refAltitude), Vector3Df(0,0,0), Quaternion(1,0,0,0));
+    myLaw->SetTarget(currentTarget, Vector3Df(0,0,0), Quaternion(1,0,0,0));
 }
 
 Drone::~Drone() {
@@ -235,17 +235,12 @@ void Drone::PositionControl(){
     uavVrpn->GetPosition(uav_p);
     uavVrpn->GetSpeed(uav_dp);
 
-    // MixOrientation();
-    // q = mixQuaternion;
-    // w = mixAngSpeed;
-
     myLaw->SetRejectionPercent(rejectionPercent);
     myLaw->SetTarget(aim_p, aim_dp, aim_yaw);
 
     myLaw->UpdateTranslationControl(uav_p, uav_dp, q);
     myLaw->UpdateThrustControl(uav_p, uav_dp);
-    // myLaw->UpdateDynamics(uav_p, uav_dp, q, w);
-    // myLaw->Update(GetTime());
+    myLaw->UpdateDynamics(uav_p, uav_dp, q, w);
 }
 
 

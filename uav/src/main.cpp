@@ -1,5 +1,4 @@
-#include "SimpleControl.h"
-#include "Drone.h"
+#include "./Control/Drone.h"
 #include <UavFactory.h>
 #include <FrameworkManager.h>
 #include <stdio.h>
