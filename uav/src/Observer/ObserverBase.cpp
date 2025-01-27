@@ -106,10 +106,10 @@ void ObserverBase::SaveStateEstimationCSV(const Eigen::VectorXf& state, const Ei
     }
 }
 
-Eigen::Vector3f ObserverBase::EstimateDisturbance_trans(const Eigen::Vector3f& p, const Eigen::Vector3f& dp, float dt){
+flair::core::Vector3Df ObserverBase::EstimateDisturbance_trans(const flair::core::Vector3Df& p, const flair::core::Vector3Df& dp, float dt){
 }
 
-Eigen::Vector3f ObserverBase::EstimateDisturbance_rot(const Eigen::Quaternionf& q, const Eigen::Vector3f& omega, float dt){
+flair::core::Vector3Df ObserverBase::EstimateDisturbance_rot(const flair::core::Quaternion& q, const flair::core::Vector3Df& omega, float dt){
 }
 
 Eigen::Vector3f ObserverBase::rotvec(const Eigen::Quaternionf &quat) {

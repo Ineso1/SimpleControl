@@ -37,7 +37,10 @@ void UDE::resetUDE(){
     firstIteration_rot = true;
 }
 
-Eigen::Vector3f UDE::EstimateDisturbance_trans(const Eigen::Vector3f& p, const Eigen::Vector3f& dp, float dt) {
+flair::core::Vector3Df UDE::EstimateDisturbance_trans(const flair::core::Vector3Df& p_aux, const flair::core::Vector3Df& dp_aux, float dt) {
+    Eigen::Vector3f p(p_aux.x, p_aux.y, p_aux.z);
+    Eigen::Vector3f dp(dp_aux.x, dp_aux.y, dp_aux.z);
+    
     Eigen::VectorXf x_t(6);
     x_t << p, dp;
     if (firstIteration_trans)
@@ -60,10 +63,13 @@ Eigen::Vector3f UDE::EstimateDisturbance_trans(const Eigen::Vector3f& p, const E
     #ifdef SAVE_UDE_DEBUG_CSV
         SaveUDEDebugCSV(u_thrust, xi_dot_trans, dt, "trans");
     #endif
-    return w_hat_trans;
+    return flair::core::Vector3Df(w_hat_trans.x(),w_hat_trans.y(),w_hat_trans.z());
 }
 
-Eigen::Vector3f UDE::EstimateDisturbance_rot(const Eigen::Quaternionf& q, const Eigen::Vector3f& omega, float dt) {
+flair::core::Vector3Df UDE::EstimateDisturbance_rot(const flair::core::Quaternion& q_aux, const flair::core::Vector3Df& omega_aux, float dt) {
+    Eigen::Quaternionf q(q_aux.q0, q_aux.q1, q_aux.q2, q_aux.q3);
+    Eigen::Vector3f omega(omega_aux.x, omega_aux.y, omega_aux.z);
+    
     Eigen::Vector3f u_torque_UDE = u_torque - omega.cross(J * omega);
     x_rot = Eigen::VectorXf(6);
     // x_rot << q.vec(), omega;
@@ -89,7 +95,8 @@ Eigen::Vector3f UDE::EstimateDisturbance_rot(const Eigen::Quaternionf& q, const 
     #ifdef SAVE_UDE_DEBUG_CSV
         SaveUDEDebugCSV(xi_UDE_rot, xi_dot_rot, dt, "rot");
     #endif
-    return w_hat_rot;
+
+    return flair::core::Vector3Df(w_hat_rot.x(), w_hat_rot.y(), w_hat_rot.z());
 }
 
 void UDE::SetNewGainUDE_trans(Eigen::Matrix3f &Omega_trans, Eigen::Vector3f &p, Eigen::Vector3f &dp) {

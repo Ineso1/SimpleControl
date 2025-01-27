@@ -11,6 +11,7 @@
 #include <Quaternion.h>
 #include <ControlLaw.h>
 #include <string>
+#include "../Observer/UDE/UDE.h"
 
 namespace flair {
     namespace gui {
@@ -61,6 +62,8 @@ namespace filter {
             flair::core::Vector3Df p_d;    // Desire position
             flair::core::Vector3Df dp_d;   // Desire velocity
             flair::core::Vector3Df Fu;
+
+            Observer::UDE ude_obs;
 
             float previous_time;
             bool first_update;

@@ -130,14 +130,14 @@ void Law::UpdateFrom(const io_data *data) {
         first_update=false;
     }
 
+    // ude_obs.EstimateDisturbance_trans(p, dp, dt)
+
     Vector3Df pos_err=p-(p_d);
     Vector3Df vel_err=dp-(dp_d);
     Vector3Df ppos,dpos;
     
-    std::cout<<"err p:\t"<<pos_err.x<<"\t"<<pos_err.y<<"\t"<<pos_err.z<<std::endl;
 	if (pos_err.GetNorm()>satPos->Value()){
 		Vector3Df sat_pos_err = pos_err*(satPos->Value()/pos_err.GetNorm());
-        std::cout<<"Aqui stoy"<<std::endl;
     }
 
     ppos = -kppos->Value()*pos_err;

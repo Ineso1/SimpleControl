@@ -46,8 +46,8 @@ public:
     ~SlidingMode();
 
     // Overriding disturbance estimation functions
-    Eigen::Vector3f EstimateDisturbance_trans(const Eigen::Vector3f& p, const Eigen::Vector3f& dp, float dt) override;
-    Eigen::Vector3f EstimateDisturbance_rot(const Eigen::Quaternionf& q, const Eigen::Vector3f& omega, float dt) override;
+    flair::core::Vector3Df EstimateDisturbance_trans(const flair::core::Vector3Df& p, const flair::core::Vector3Df& dp, float dt) override;
+    flair::core::Vector3Df EstimateDisturbance_rot(const flair::core::Quaternion& q, const flair::core::Vector3Df& omega, float dt) override;
 
     // Setters for parameters
     void SetUpperBounds(float L_trans_new, float L_rot_new);

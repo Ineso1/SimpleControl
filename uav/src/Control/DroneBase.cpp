@@ -1,4 +1,3 @@
-// DroneBase.cpp
 #include "DroneBase.h"
 
 DroneBase::DroneBase(TargetController *controller) : UavStateMachine(controller), vrpnLost(false), behaviourMode(BehaviourMode_t::Default) {

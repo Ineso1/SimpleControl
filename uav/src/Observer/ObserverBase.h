@@ -5,7 +5,8 @@
 #include <string>
 #include <iomanip>
 #include <fstream>
-
+#include <Vector3D.h>
+#include <Quaternion.h>
 
 namespace Observer {
 class ObserverBase {
@@ -52,8 +53,8 @@ public:
     void SaveStateEstimationCSV(const Eigen::VectorXf&, const Eigen::VectorXf&, const Eigen::Vector3f&, const std::string&);
 
     // Pure virtual method for disturbance estimation 
-    virtual Eigen::Vector3f EstimateDisturbance_trans(const Eigen::Vector3f& p, const Eigen::Vector3f& dp, float dt);
-    virtual Eigen::Vector3f EstimateDisturbance_rot(const Eigen::Quaternionf& q, const Eigen::Vector3f& omega, float dt);
+    virtual flair::core::Vector3Df EstimateDisturbance_trans(const flair::core::Vector3Df& p, const flair::core::Vector3Df& dp, float dt);
+    virtual flair::core::Vector3Df EstimateDisturbance_rot(const flair::core::Quaternion& q, const flair::core::Vector3Df& omega, float dt);
     
     Eigen::Vector3f rotvec(const Eigen::Quaternionf&);
     

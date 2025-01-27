@@ -93,20 +93,20 @@ void Drone::ApplyKalman() {
 *****************************************/
 
 void Drone::ApplyControl() {
-    // switch(observerMode_layout->CurrentIndex()){
-    //     case 0:
-    //         myLaw->observerMode = MyLaw::ObserverMode_t::UDE;
-    //         break;
-    //     case 1:
-    //         myLaw->observerMode = MyLaw::ObserverMode_t::Luenberger;
-    //         break;
-    //     case 2:
-    //         myLaw->observerMode = MyLaw::ObserverMode_t::SuperTwist;
-    //         break;
-    //     case 3:
-    //         myLaw->observerMode = MyLaw::ObserverMode_t::SlidingMode;
-    //         break;
-    // }
+    switch(observerMode_layout->CurrentIndex()){
+        case 0:
+            myLaw->observerMode = Law::ObserverMode_t::UDE;
+            break;
+        case 1:
+            myLaw->observerMode = Law::ObserverMode_t::Luenberger;
+            break;
+        case 2:
+            myLaw->observerMode = Law::ObserverMode_t::SuperTwist;
+            break;
+        case 3:
+            myLaw->observerMode = Law::ObserverMode_t::SlidingMode;
+            break;
+    }
 
     switch(beahviourMode_layout->CurrentIndex()){
         case 0:
@@ -216,12 +216,10 @@ void Drone::PositionControl(){
     aim_p = currentTarget;
     aim_dp = Vector3Df(0, 0, 0);
 
+    myLaw->SetRejectionPercent(rejectionPercent);
+    myLaw->SetTarget(aim_p, aim_dp, qz);
 
-    // myLaw->SetRejectionPercent(rejectionPercent);
-    // myLaw->SetTarget(aim_p, aim_dp, qz);
 
-    // myLaw->CalculateControl(uav_p, uav_dp, q, w);
-    // myLaw->SetValues(uav_p, uav_dp, q, w);
     
     
     
