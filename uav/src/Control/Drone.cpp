@@ -11,6 +11,11 @@ Drone::Drone(TargetController *controller) : DroneBase(controller) {
     kalman = false;
     perturbation = false;
 
+    float diameter = 8.0;
+    float fixedZ = -1.0;
+    float resolution = 0.002;
+    trayectory_circle = Trayectory(diameter,fixedZ,resolution);
+
     // Law instance
     myLaw = new Law(execLayout->At(1, 0), "MyLaw");
 
@@ -245,7 +250,45 @@ void Drone::PositionControl(){
 
 
 void Drone::TargetFollowControl(){
+    Vector3Df uav_p, uav_dp; 
+    Vector3Df aim_p, aim_dp;
+    Vector3Df rejectionPercent = flair::core::Vector3Df(rejectionPercent_layout->Value().x, rejectionPercent_layout->Value().y, rejectionPercent_layout->Value().z);
+    Quaternion q;
+    Vector3Df w;
+    Quaternion qz(1,0,0,0);
+    float yawref = 0;
+
+    GetOrientation()->GetQuaternionAndAngularRates(q, w);
+
+    uavVrpn->GetPosition(uav_p);
+    uavVrpn->GetSpeed(uav_dp);
+
+    aim_p = trayectory_circle.getNextPoint();;
+    aim_dp = Vector3Df(0, 0, 0);
+
+    myLaw->SetRejectionPercent(rejectionPercent);
+    myLaw->SetTarget(aim_p, aim_dp, qz);
+
+
     
+    
+    
+    qz = Quaternion(cos(yawref/2),0,0,sin(yawref/2));
+    qz.Normalize();
+    Quaternion qze = qz.GetConjugate()*q;
+    Vector3Df thetaze = 2*qze.GetLogarithm();
+    float zsign = 1;
+    if (thetaze.GetNorm()>=3.1416){
+        zsign = -1;
+    }
+    qz = zsign*qz;
+
+    std::cout<<"d p:\t"<<aim_p.x<<"\t"<<aim_p.y<<"\t"<<aim_p.z<<std::endl;
+
+
+    myLaw->SetValues(q,qz,w,uav_p,aim_p,uav_dp,aim_dp);
+    
+    myLaw->Update(GetTime());
 }
 
 void Drone::TestObserverSequence(void){

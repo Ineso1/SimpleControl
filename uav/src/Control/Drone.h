@@ -24,6 +24,7 @@
 #include <chrono>
 #include "Law.h"
 #include <iostream>
+#include "Trayectory.h"
 
 class Drone : public DroneBase {
 public:
@@ -53,6 +54,7 @@ protected:
 
     // Control Law
     Law *myLaw;
+    Trayectory trayectory_circle;
 
     // Buttons handlers
     void PositionChange() override;

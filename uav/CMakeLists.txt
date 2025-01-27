@@ -19,6 +19,7 @@ SET(SRC_FILES
     src/Control/Drone.cpp
     src/Control/DroneBase.cpp
     src/Control/Law.cpp
+    src/Control/Trayectory.cpp
     src/Observer/ObserverBase.cpp
     src/Observer/UDE/UDE.cpp
     src/Observer/SlidingMode/SlidingMode.cpp
