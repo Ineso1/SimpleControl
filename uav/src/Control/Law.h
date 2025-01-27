@@ -7,6 +7,7 @@
 #include <Vector3DSpinBox.h>
 #include <SpinBox.h>
 #include <GroupBox.h>
+#include <GridLayout.h>
 #include <Quaternion.h>
 #include <ControlLaw.h>
 #include <string>
@@ -26,6 +27,20 @@ namespace filter {
             bool isDisturbanceActive; // Flag for disturbance activation
             bool isDisturbanceRotActive; // Flag for disturbance rotational activation
             bool isKalmanActive;
+
+            flair::core::Vector3Df u_thrust;
+            flair::core::Vector3Df u_torque;
+
+            float g;
+            float mass;
+
+            flair::core::Vector3Df w_estimation_trans;
+            flair::core::Vector3Df w_estimation_rot;
+            flair::core::Vector3Df rejectionPercent;
+            flair::core::Vector3Df rejectionRotPercent;
+
+            flair::gui::GridLayout *controlLayout;
+            flair::gui::GridLayout *paramsLayout;
 
             flair::gui::GroupBox *control_groupbox_att;
             flair::gui::GroupBox *control_groupbox_trans;
@@ -59,6 +74,10 @@ namespace filter {
             void Reset(void);
             void UpdateFrom(const core::io_data *data);
             void SetValues(core::Quaternion q,core::Quaternion qd,core::Vector3Df w,core::Vector3Df p, core::Vector3Df p_d,core::Vector3Df dp,core::Vector3Df dp_d);
+        
+            void SetTarget(core::Vector3Df, core::Vector3Df, core::Quaternion);
+            void SetRejectionPercent(core::Vector3Df);
+
         private:
     };
 }

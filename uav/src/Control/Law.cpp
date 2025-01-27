@@ -55,18 +55,36 @@ Law::Law(const LayoutPosition* position,string name) : ControlLaw(position->getL
     AddDataToLog(stateM);
     Reset();
     first_update=true;
+    isDisturbanceActive = false;
+    isKalmanActive = false;
+    rejectionPercent = Vector3Df(0,0,0);
+    rejectionRotPercent = Vector3Df(0,0,0);
+    w_estimation_trans = Vector3Df(0,0,0);
+    w_estimation_rot = Vector3Df(0,0,0);
+    u_thrust = Vector3Df(0,0,0);
+    u_torque = Vector3Df(0,0,0);
+    mass = 0.445;
+    g = 9.81;
+    observerMode = ObserverMode_t::UDE;
 
-    GroupBox* reglages_groupbox=new GroupBox(position,name);
-            kpatt=new Vector3DSpinBox(reglages_groupbox->NewRow(),"kpatt",0,100,1);
-            kdatt=new Vector3DSpinBox(reglages_groupbox->LastRowLastCol(),"kdatt",0,100,1);
-            satAtt=new DoubleSpinBox(reglages_groupbox->LastRowLastCol(),"satAtt:",0,1,0.1);
+    p_d = Vector3Df(0,0,1);
+    dp_d = Vector3Df(0,0,0);
 
-            kppos=new Vector3DSpinBox(reglages_groupbox->NewRow(),"kppos",0,100,0.01);
-            kdpos=new Vector3DSpinBox(reglages_groupbox->LastRowLastCol(),"kdpos",0,100,0.01);
+    controlLayout = new GridLayout(position, "PD control");
+    GroupBox* control_groupbox_att = new GroupBox(controlLayout->LastRowLastCol(),"Attitude");
+    kpatt=new Vector3DSpinBox(control_groupbox_att->NewRow(),"kp att",0,100,1);
+    kdatt=new Vector3DSpinBox(control_groupbox_att->NewRow(),"kd att",0,100,1);
+    satAtt=new DoubleSpinBox(control_groupbox_att->NewRow(),"sat att:",0,1,0.1);
 
-			satPos=new DoubleSpinBox(reglages_groupbox->LastRowLastCol(),"satPos:",0,1,0.1);
-            satPosForce=new DoubleSpinBox(reglages_groupbox->LastRowLastCol(),"satPosForce:",0,1,0.1);
-            mg=new DoubleSpinBox(reglages_groupbox->NewRow(),"mg",0,100,0.0001);
+    GroupBox* control_groupbox_trans = new GroupBox(controlLayout->LastRowLastCol(),"Translation");
+    kppos=new Vector3DSpinBox(control_groupbox_trans->NewRow(),"kp pos",0,100,0.01);
+    kdpos=new Vector3DSpinBox(control_groupbox_trans->NewRow(),"kd pos",0,100,0.01);
+    satPos=new DoubleSpinBox(control_groupbox_trans->NewRow(),"satPos:",0,1,0.1);
+    satPosForce=new DoubleSpinBox(control_groupbox_trans->NewRow(),"satPosForce:",0,1,0.1);
+    
+    paramsLayout = new GridLayout(controlLayout->NewRow(), "Params");
+    GroupBox* params_groupbox = new GroupBox(paramsLayout->NewRow(),"Params");
+    mg=new DoubleSpinBox(params_groupbox->NewRow(),"mg",0,100,0.0001);
 }
 
 Law::~Law(void) {
@@ -76,9 +94,12 @@ void Law::UseDefaultPlot(const gui::LayoutPosition* position) {
 }
 
 void Law::Reset(void) {
-    p_d.x=0;
-    p_d.y=0;
-    p_d.z=0;
+    p_d.x = 0;
+    p_d.y = 0;
+    p_d.z = 0;
+    dp_d.x = 0;
+    dp_d.y = 0;
+    dp_d.z = 0;
 }
 
 void Law::UpdateFrom(const io_data *data) {
@@ -231,6 +252,14 @@ void Law::SetValues(Quaternion q,Quaternion qd,Vector3Df w,core::Vector3Df p,cor
     input->SetValue(22,0,dp_d.z);
 }
 
+
+void Law::SetTarget(Vector3Df target_pos, Vector3Df target_vel, Quaternion target_yaw){
+    p_d = target_pos;
+}
+
+void Law::SetRejectionPercent(Vector3Df rejection){
+    rejectionPercent = rejection;
+}
 
 } // end namespace filter
 } // end namespace flair
