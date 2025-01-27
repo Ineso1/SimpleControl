@@ -5,9 +5,8 @@ namespace flair
 namespace filter
 {
 	
-MyLaw::MyLaw(const LayoutPosition* position, string name) {
+MyLaw::MyLaw(const LayoutPosition* position, string name) : ControlLaw(position->getLayout(),name,8) {
        
-    previous_chrono_time = std::chrono::high_resolution_clock::now();
     firstUpdate = true;
     isDisturbanceActive = false;
     isKalmanActive = false;
@@ -26,7 +25,7 @@ MyLaw::MyLaw(const LayoutPosition* position, string name) {
     /************************
     Logs???
     ************************/
-    input = new Matrix(position->getLayout(),23,1,floatType,name);
+    input = new Matrix(this,23,1,floatType,name);
     MatrixDescriptor* desc = new MatrixDescriptor(23,1);
     desc->SetElementName(0,0,"q0");
     desc->SetElementName(1,0,"q1");
@@ -51,24 +50,30 @@ MyLaw::MyLaw(const LayoutPosition* position, string name) {
     desc->SetElementName(20,0,"udeRx");
     desc->SetElementName(21,0,"udeRy");
     desc->SetElementName(22,0,"udeRz");
-
-    dataexp = new Matrix(position->getLayout(),desc,floatType,name);
+    dataexp = new Matrix(this,desc,floatType,name);
     delete desc;
-    // AddDataToLog(dataexp);
-
+    AddDataToLog(dataexp);
 
     perturbation_trans = Vector3Df(0,0,0);
     perturbation_rot = Vector3Df(0,0,0);
-    GroupBox* customPID_groupbox = new GroupBox(position,name);
-    uX_custom = new Pid(customPID_groupbox->At(1,0),"u_x_custom");
-    uY_custom = new Pid(customPID_groupbox->At(1,1),"u_y_custom");
-    uZ_custom = new PidThrust(customPID_groupbox->At(1,3), "u_z_custom");
-    omega_gains_rot = new Vector3DSpinBox(customPID_groupbox->NewRow(),"omegaUDE_rot",0,100,0.01,3,Vector3Df(80.0,80.0,80.0));
-    omega_gains_trans = new Vector3DSpinBox(customPID_groupbox->NewRow(),"omegaUDE_trans",0,100,0.01,3,Vector3Df(60.0,60.0,60.0));
-    mass_layout = new DoubleSpinBox(customPID_groupbox->NewRow(),"Massa que mas aplauda",0.1,10,0.001,3,0.405);
-    motorConst = new DoubleSpinBox(customPID_groupbox->NewRow(),"Motor const",0,20,0.0001,10,10);
 
+    controlLayout = new GridLayout(position, "PD control");
     
+    GroupBox* control_groupbox_att = new GroupBox(controlLayout->LastRowLastCol(),"Attitude");
+    kpatt=new Vector3DSpinBox(control_groupbox_att->NewRow(),"kpatt",0,100,1);
+    kdatt=new Vector3DSpinBox(control_groupbox_att->NewRow(),"kdatt",0,100,1);
+    satAtt=new DoubleSpinBox(control_groupbox_att->NewRow(),"satAtt:",0,1,0.1);
+    
+    GroupBox* control_groupbox_trans = new GroupBox(controlLayout->LastRowLastCol(),"Translation");
+    kppos=new Vector3DSpinBox(control_groupbox_trans->NewRow(),"kppos",0,100,0.01);
+    kdpos=new Vector3DSpinBox(control_groupbox_trans->NewRow(),"kdpos",0,100,0.01);
+    satPos=new DoubleSpinBox(control_groupbox_trans->NewRow(),"satPos:",0,1,0.1);
+    satPosForce=new DoubleSpinBox(control_groupbox_trans->NewRow(),"satPosForce:",0,1,0.1);
+   
+    paramsLayout = new GridLayout(controlLayout->NewRow(), "Params");
+    GroupBox* params_groupbox = new GroupBox(paramsLayout->NewRow(),"Params");
+    mass_layout = new DoubleSpinBox(params_groupbox->NewRow(),"Mass",0.1,10,0.001,3,0.405);
+    motorConst = new DoubleSpinBox(params_groupbox->NewRow(),"Motor const",0,20,0.0001,10,10);
 
     #ifdef SAVE_ERRORS_CSV
         errorsFilePath = ERRRORS_FILE_PATH_CSV;
@@ -84,6 +89,9 @@ MyLaw::MyLaw(const LayoutPosition* position, string name) {
         rotationOutputFileCSV       << "domega_x,domega_y,domega_z,omega_x,omega_y,omega_z,"
                                     << "dq_w,dq_x,dq_y,dq_z,q_w,q_x,q_y,q_z,dt\n";
     #endif
+
+    p_d = Vector3Df(0,0,1);
+    dp_d = Vector3Df(0,0,0);
 }
 
 MyLaw::~MyLaw(void) {
@@ -92,99 +100,214 @@ MyLaw::~MyLaw(void) {
     }
 }
 
-void MyLaw::UpdateTranslationControl(Vector3Df& current_p, Vector3Df &current_dp, Quaternion &current_q){
-    Vector3Df pos_err = current_p - p_d;
-    std::cout<<"errZ "<< current_p.z << std::endl;
-    Vector3Df vel_err = current_dp - Vector3Df(0,0,0);
-    pos_err.Rotate(-current_q);
-    vel_err.Rotate(-current_q);
-    uX_custom->SetValues(pos_err.x, vel_err.x);
-    uX_custom->Update(GetTime());
-    uY_custom->SetValues(pos_err.y, vel_err.y);
-    uY_custom->Update(GetTime());
+void MyLaw::UpdateTranslationControl(){
+    // Vector3Df pos_err = current_p - p_d;
+    // std::cout<<"errZ "<< current_p.z << std::endl;
+    // Vector3Df vel_err = current_dp - Vector3Df(0,0,0);
+    // pos_err.Rotate(-current_q);
+    // vel_err.Rotate(-current_q);
+    // uX_custom->SetValues(pos_err.x, vel_err.x);
+    // uX_custom->Update(GetTime());
+    // uY_custom->SetValues(pos_err.y, vel_err.y);
+    // uY_custom->Update(GetTime());
 }
 
-void MyLaw::UpdateThrustControl(Vector3Df& current_p , Vector3Df &current_dp){
-    Vector3Df pos_err = -current_p - p_d;
-    Vector3Df vel_err = -current_dp - Vector3Df(0,0,0);
-    uZ_custom->SetValues(pos_err.z, vel_err.z);
-    uZ_custom->Update(GetTime());
+void MyLaw::UpdateThrustControl(){
+    // Vector3Df pos_err = -current_p - p_d;
+    // Vector3Df vel_err = -current_dp - Vector3Df(0,0,0);
+    // uZ_custom->SetValues(pos_err.z, vel_err.z);
+    // uZ_custom->Update(GetTime());
 }
+
+
+void MyLaw::CalculateControl(Vector3Df& current_p , Vector3Df &current_dp, Quaternion &current_q, Vector3Df &current_omega) {
+    // mass = mass_layout->Value();
+    
+    // if(firstUpdate){
+    //     previous_chrono_time = std::chrono::high_resolution_clock::now();
+    // }
+    // float dt;
+    // auto current_time = std::chrono::high_resolution_clock::now();
+    // std::chrono::duration<float> alt_dt = current_time - previous_chrono_time;
+    // dt = alt_dt.count();
+    // previous_chrono_time = current_time;
+    // if(firstUpdate){
+    //     dt = 0;
+    // }
+    // std::cout<<dt<<std::endl;
+
+
+    // float thrust = uZ_custom->Output();
+    // u_thrust = Vector3Df(0,0,thrust);
+
+    // if(observerMode == MyLaw::ObserverMode_t::UDE){
+    //     /* Implementation of the observer */
+    // } else if(observerMode == MyLaw::ObserverMode_t::Luenberger){
+    //     /* Implementation of the observer */
+    // } else if(observerMode == MyLaw::ObserverMode_t::SuperTwist){
+    //     /* Implementation of the observer */
+    // }else if(observerMode == MyLaw::ObserverMode_t::SlidingMode){
+    //     /* Implementation of the observer */
+    // }
+
+    // /* Aqui hay que actualizat los valores*/
+    // w_estimation_trans = Vector3Df(0,0,0);
+    // w_estimation_rot = Vector3Df(0,0,0);
+
+
+    // if(!isDisturbanceActive){
+    //     w_estimation_trans = Vector3Df(0,0,0); 
+    // }
+
+    // if(!isDisturbanceRotActive){
+    //     w_estimation_rot = Vector3Df(0,0,0);
+    // }
+
+    // UpdateTranslationControl(current_p, current_dp, current_q);
+    // UpdateThrustControl(current_p, current_dp);
+
+    // Vector3Df nada (0,0,0);
+    // Quaternion nadaQ (0,0,0);
+
+    // #ifdef SAVE_REAL_STATE_SPACE_CSV
+    //     SaveStateCSV(current_p, current_dp, nada, nada, current_omega, nadaQ, current_q, dt); 
+    // #endif
+
+    // firstUpdate = false;
+}
+
+
+
+void MyLaw::UpdateFrom(const io_data *data) {
+    input->GetMutex();
+    Vector3Df p(input->ValueNoMutex(0,0),input->ValueNoMutex(1,0),input->ValueNoMutex(2,0));
+    Vector3Df dp(input->ValueNoMutex(3,0),input->ValueNoMutex(4,0),input->ValueNoMutex(5,0));
+    Quaternion q(input->ValueNoMutex(6,0),input->ValueNoMutex(7,0),input->ValueNoMutex(8,0),input->ValueNoMutex(9,0));
+    Vector3Df w(input->ValueNoMutex(10,0),input->ValueNoMutex(11,0),input->ValueNoMutex(12,0));
+    input->ReleaseMutex();
+    
+    Vector3Df kp_trans = kppos->Value();
+    Vector3Df kd_trans = kdpos->Value();
+    Vector3Df kp_rot = kpatt->Value();
+    Vector3Df kd_rot = kdatt->Value();
+
+    float sat_trans = satPos->Value();
+    float sat_force = satPosForce->Value();
+    float sat_rot = satAtt->Value();
+    
+
+    float delta_t;
+    q.Normalize();
+
+    delta_t=(float)(data->DataTime()-previous_time)/1000000000.;
+
+    if(firstUpdate==true) {
+        delta_t=0;
+        firstUpdate=false;
+        u_thrust.x=0;
+        u_thrust.y=0;
+        u_thrust.z=0.452;
+    }
+
+    float Fth;
+    Vector3Df pos_err= p - p_d;
+    Vector3Df vel_err= dp - dp_d;
+
+    std::cout<<"err p:\t"<<pos_err.x<<"\t"<<pos_err.y<<"\t"<<pos_err.z<<std::endl;
+
+    if (pos_err.GetNorm() > sat_trans){
+		Vector3Df sat_pos_err = pos_err * (sat_trans / pos_err.GetNorm());
+        std::cout<<"Saturado"<<std::endl;
+    }
+
+    u_thrust = (- kp_trans * pos_err) + (- kd_trans * vel_err); // - estimacion de perturbacion
+	u_thrust.Saturate(sat_force);
+    u_thrust.z = u_thrust.z - 0.452;
+	Fth = -u_thrust.GetNorm();
+
+
+    if (Fth>0){Fth = 0;}
+
+    Quaternion qz(1,0,0,0);
+    Quaternion q_d(1,0,0,0);
+    if (u_thrust.GetNorm()!=0){
+		
+        float scalarPart = DotProduct(Vector3Df(0,0,-1), u_thrust) + u_thrust.GetNorm();
+        Vector3Df vectorPart = CrossProduct(Vector3Df(0,0,-1), u_thrust);        
+        q_d.q0 = scalarPart;
+        q_d.q1 = vectorPart.x;
+        q_d.q2 = vectorPart.y;
+        q_d.q3 = vectorPart.z;
+        q_d.Normalize();
+        
+        q_d = q_d * qz;
+        q_d.Normalize();
+    }else{
+        q_d = q;
+        q_d.Normalize();
+        std::cout<<"Porque estoy aqui?"<<std::endl;
+    }
+	Quaternion qe = q_d.GetConjugate()*q;
+	Vector3Df thetae = 2 * qe.GetLogarithm();
+
+    Vector3Df Tau_u = (kp_trans * thetae) + (kd_rot * w);
+    Vector3Df Tau = Tau_u;
+    Tau.Saturate(sat_rot);
+
+    output->SetValue(0,0,Tau.x);
+    output->SetValue(1,0,Tau.y);
+    output->SetValue(2,0,Tau.z);
+    output->SetValue(3,0,Fth);
+    output->SetDataTime(data->DataTime());
+	
+	output->SetValue(4,0,q_d.q0);
+    output->SetValue(5,0,q_d.q1);
+    output->SetValue(6,0,q_d.q2);
+	output->SetValue(7,0,q_d.q3);
+
+    // stateM->GetMutex();
+    // stateM->SetValueNoMutex(0,0,q.q0);
+    // stateM->SetValueNoMutex(1,0,q.q1);
+    // stateM->SetValueNoMutex(2,0,q.q2);
+    // stateM->SetValueNoMutex(3,0,q.q3);
+    // stateM->SetValueNoMutex(4,0,qd.q0);
+    // stateM->SetValueNoMutex(5,0,qd.q1);
+    // stateM->SetValueNoMutex(6,0,qd.q2);
+    // stateM->SetValueNoMutex(7,0,qd.q3);
+    // stateM->SetValueNoMutex(8,0,w.x);
+    // stateM->SetValueNoMutex(9,0,w.y);
+    // stateM->SetValueNoMutex(10,0,w.z);
+    // stateM->SetValueNoMutex(11,0,p.x);
+    // stateM->SetValueNoMutex(12,0,p.y);
+    // stateM->SetValueNoMutex(13,0,p.z);
+    // stateM->SetValueNoMutex(14,0,p_d.x);
+    // stateM->SetValueNoMutex(15,0,p_d.y);
+    // stateM->SetValueNoMutex(16,0,p_d.z);
+    // stateM->SetValueNoMutex(17,0,dp.x);
+    // stateM->SetValueNoMutex(18,0,dp.y);
+    // stateM->SetValueNoMutex(19,0,dp.z);
+    // stateM->SetValueNoMutex(20,0,0);
+    // stateM->SetValueNoMutex(21,0,0);
+    // stateM->SetValueNoMutex(22,0,0);
+    // stateM->ReleaseMutex();
+
+    previous_time=data->DataTime();
+    ProcessUpdate(output);    
+}
+
+
+
+
+
 
 void MyLaw::Reset(void) {
     p_d.x = 0;
     p_d.y = 0;
     p_d.z = 0;
+    dp_d.x = 0;
+    dp_d.y = 0;
+    dp_d.z = 0;
 }
-
-void MyLaw::CalculateControl(Vector3Df& current_p , Vector3Df &current_dp, Quaternion &current_q, Vector3Df &current_omega) {
-    Eigen::Vector3f w_estimation_trans_eig;
-    Eigen::Vector3f w_estimation_rot_eig;
-    mass = mass_layout->Value();
-    
-    if(firstUpdate){
-        previous_chrono_time = std::chrono::high_resolution_clock::now();
-    }
-    float dt;
-    auto current_time = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<float> alt_dt = current_time - previous_chrono_time;
-    dt = alt_dt.count();
-    previous_chrono_time = current_time;
-    if(firstUpdate){
-        dt = 0;
-    }
-    std::cout<<dt<<std::endl;
-
-
-    float thrust = uZ_custom->Output();
-    u_thrust = Vector3Df(0,0,thrust);
-
-    if(observerMode == MyLaw::ObserverMode_t::UDE){
-        ude.u_thrust = Eigen::Vector3f(u_thrust.x, u_thrust.y, u_thrust.z);
-        ude.u_torque = Eigen::Vector3f(u_torque.x, u_torque.y, u_torque.z);
-        w_estimation_trans_eig = ude.EstimateDisturbance_trans(Eigen::Vector3f(current_p.x, current_p.y, current_p.z), Eigen::Vector3f(current_dp.x, current_dp.y, current_dp.z), dt);
-        // w_estimation_rot_eig = ude.EstimateDisturbance_rot(Eigen::Quaternionf(current_q.q0, current_q.q1, current_q.q2, current_q.q3), Eigen::Vector3f(current_omega), dt);
-    } else if(observerMode == MyLaw::ObserverMode_t::Luenberger){
-        luenberger.u_thrust = Eigen::Vector3f(u_thrust.x, u_thrust.y, u_thrust.z);
-        luenberger.u_torque = Eigen::Vector3f(u_torque.x, u_torque.y, u_torque.z);
-        w_estimation_trans_eig = luenberger.EstimateDisturbance_trans(Eigen::Vector3f(current_p.x, current_p.y, current_p.z), Eigen::Vector3f(current_dp.x, current_dp.y, current_dp.z), dt);
-        // w_estimation_rot_eig = luenberger.EstimateDisturbance_rot(Eigen::Quaternionf(current_q.q0, current_q.q1, current_q.q2, current_q.q3), Eigen::Vector3f(current_omega), dt);
-    } else if(observerMode == MyLaw::ObserverMode_t::SuperTwist){
-        superTwist.u_thrust = Eigen::Vector3f(u_thrust.x, u_thrust.y, u_thrust.z);
-        superTwist.u_torque = Eigen::Vector3f(u_torque.x, u_torque.y, u_torque.z);
-        w_estimation_trans_eig = superTwist.EstimateDisturbance_trans(Eigen::Vector3f(current_p.x, current_p.y, current_p.z), Eigen::Vector3f(current_dp.x, current_dp.y, current_dp.z), dt);
-        // w_estimation_rot_eig = superTwist.EstimateDisturbance_rot(Eigen::Quaternionf(current_q.q0, current_q.q1, current_q.q2, current_q.q3), Eigen::Vector3f(current_omega), dt);
-    }else if(observerMode == MyLaw::ObserverMode_t::SlidingMode){
-        slidingMode.u_thrust = Eigen::Vector3f(u_thrust.x, u_thrust.y, u_thrust.z);
-        slidingMode.u_torque = Eigen::Vector3f(u_torque.x, u_torque.y, u_torque.z);
-        w_estimation_trans_eig = slidingMode.EstimateDisturbance_trans(Eigen::Vector3f(current_p.x, current_p.y, current_p.z), Eigen::Vector3f(current_dp.x, current_dp.y, current_dp.z), dt);
-        // w_estimation_rot_eig = slidingMode.EstimateDisturbance_rot(Eigen::Quaternionf(current_q.q0, current_q.q1, current_q.q2, current_q.q3), Eigen::Vector3f(current_omega), dt);
-    }
-
-    w_estimation_trans = Vector3Df(w_estimation_trans_eig.x(),w_estimation_trans_eig.y(),w_estimation_trans_eig.z());
-    w_estimation_rot = Vector3Df(w_estimation_rot_eig.x(),w_estimation_rot_eig.y(),w_estimation_rot_eig.z());
-    if(!isDisturbanceActive){
-        w_estimation_trans = Vector3Df(0,0,0); 
-    }
-
-    if(!isDisturbanceRotActive){
-        w_estimation_rot = Vector3Df(0,0,0);
-    }
-
-    UpdateTranslationControl(current_p, current_dp, current_q);
-    UpdateThrustControl(current_p, current_dp);
-
-    Vector3Df nada (0,0,0);
-    Quaternion nadaQ (0,0,0);
-
-    #ifdef SAVE_REAL_STATE_SPACE_CSV
-        SaveStateCSV(current_p, current_dp, nada, nada, current_omega, nadaQ, current_q, dt); 
-    #endif
-
-    firstUpdate = false;
-}
-
-
 
 void MyLaw::SaveErrorsCSV(Vector3Df &ep, Quaternion &eq, float &dt){
     if (errorsOutputFileCSV.is_open()) {
@@ -215,20 +338,20 @@ void MyLaw::SaveStateCSV(Vector3Df &p, Vector3Df &dp,Vector3Df &ddp, Vector3Df &
     }
 }
 
-void MyLaw::UpdateDynamics(Vector3Df p, Vector3Df dp, Quaternion q,Vector3Df w){
-    input->SetValue(0,0,q.q0);
-    input->SetValue(1,0,q.q1);
-    input->SetValue(2,0,q.q2);
-    input->SetValue(3,0,q.q3);
-    input->SetValue(8,0,w.x);
-    input->SetValue(9,0,w.y);
-    input->SetValue(10,0,w.z);
-    input->SetValue(14,0,p.x);
-    input->SetValue(15,0,p.y);
-    input->SetValue(16,0,p.z);
-    input->SetValue(17,0,dp.x);
-    input->SetValue(18,0,dp.y);
-    input->SetValue(19,0,dp.z);
+void MyLaw::SetValues(Vector3Df& p, Vector3Df& dp, Quaternion& q,Vector3Df& w){
+    input->SetValue(0,0,p.x);
+    input->SetValue(1,0,p.y);
+    input->SetValue(2,0,p.z);
+    input->SetValue(3,0,dp.x);
+    input->SetValue(4,0,dp.y);
+    input->SetValue(5,0,dp.z);
+    input->SetValue(6,0,q.q0);
+    input->SetValue(7,0,q.q1);
+    input->SetValue(8,0,q.q2);
+    input->SetValue(9,0,q.q3);
+    input->SetValue(10,0,w.x);
+    input->SetValue(11,0,w.y);
+    input->SetValue(12,0,w.z);
 };
 
 void MyLaw::SetTarget(Vector3Df target_pos, Vector3Df target_vel, Quaternion target_yaw){

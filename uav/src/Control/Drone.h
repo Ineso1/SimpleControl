@@ -23,6 +23,7 @@
 #include <PidThrust.h>
 #include <chrono>
 #include "MyLaw.h"
+#include "Law.h"
 #include <iostream>
 
 class Drone : public DroneBase {
@@ -52,7 +53,7 @@ protected:
     Quaternion initQuaternion;
 
     // Control Law
-    MyLaw *myLaw;
+    Law *myLaw;
 
     // Buttons handlers
     void PositionChange() override;
@@ -69,8 +70,8 @@ protected:
 
     // Control inputs
     float ComputeCustomThrust() override;
+    void ComputeCustomTorques(flair::core::Euler &torques);
     const flair::core::AhrsData *GetOrientation(void) const override;
-    flair::core::AhrsData *GetReferenceOrientation(void) override;
     void AltitudeValues(float &z,float &dz) const override;
 
     // Control behave algorithm functions

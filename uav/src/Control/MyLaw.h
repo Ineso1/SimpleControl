@@ -21,16 +21,9 @@
 #include <string>
 #include <fstream>
 #include <iostream>
-#include <chrono>
 #include <iomanip>
 #include <Pid.h>
 #include <PidThrust.h>
-#include <IODevice.h>
-#include "../Observer/UDE/UDE.h"
-#include "../Observer/Luenberger/Luenberger.h"
-#include "../Observer/SlidingMode/SlidingMode.h"
-#include "../Observer/SuperTwist/SuperTwist.h"
-#include <Eigen/Dense>
 
 using namespace std;
 using std::string;
@@ -45,7 +38,9 @@ namespace flair {
 
 namespace flair {
 namespace filter {
-    class MyLaw {
+    class MyLaw 
+    : public ControlLaw
+    {
         public:
 
         enum class ObserverMode_t { UDE, Luenberger, SuperTwist, SlidingMode };
@@ -55,8 +50,20 @@ namespace filter {
         bool isDisturbanceRotActive; // Flag for disturbance rotational activation
         bool isKalmanActive;
 
-        flair::filter::Pid *uX_custom, *uY_custom;
-        flair::filter::PidThrust *uZ_custom;
+        GridLayout *controlLayout;
+        GridLayout *paramsLayout;
+
+        GroupBox *control_groupbox_att;
+        Vector3DSpinBox *kpatt;
+        Vector3DSpinBox *kdatt;
+        DoubleSpinBox *satAtt;
+
+        GroupBox *control_groupbox_trans;
+        Vector3DSpinBox *kppos;
+        Vector3DSpinBox *kdpos;
+        DoubleSpinBox *satPos;
+        DoubleSpinBox *satPosForce;
+        DoubleSpinBox *mg;
 
         // Layout drone properties
         DoubleSpinBox *mass_layout;
@@ -66,6 +73,7 @@ namespace filter {
         DoubleSpinBox *motorConst;
 
         Vector3Df p_d;    // Desire position
+        Vector3Df dp_d;    // Desire velocity
 
         float motorK;
         float g;
@@ -83,7 +91,7 @@ namespace filter {
                 
         bool firstUpdate;
 
-        std::chrono::high_resolution_clock::time_point previous_chrono_time;
+        float previous_time;
 
         std::ofstream errorsOutputFileCSV;
         std::string errorsFilePath;
@@ -92,13 +100,7 @@ namespace filter {
         std::ofstream rotationOutputFileCSV;
         std::string rotationFilePath;
 
-        Matrix *stateM, *dataexp, *input; // Description Matrix
-
-        Observer::UDE ude;
-        Observer::Luenberger luenberger;
-        Observer::SlidingMode slidingMode;
-        Observer::SuperTwist superTwist;
-
+        Matrix *stateM, *dataexp; // Description Matrix
 
         ~MyLaw(void);
         MyLaw(const LayoutPosition* position,std::string name);
@@ -114,15 +116,16 @@ namespace filter {
         ///////////////////////////
         // MA CONTROL ALGO
         /////////////////////////// 
-        void UpdateTranslationControl(Vector3Df& current_p , Vector3Df &current_dp, Quaternion &current_q);
-        void UpdateThrustControl(Vector3Df& current_p , Vector3Df &current_dp);
+        void UpdateTranslationControl();
+        void UpdateThrustControl();
         void CalculateControl(Vector3Df& current_p , Vector3Df &current_dp, Quaternion &current_q, Vector3Df &current_omega);
                 
         ///////////////////////////
         // UPDATE DYNAMIC VARS
         /////////////////////////// 
                 
-        void UpdateDynamics(Vector3Df p, Vector3Df pd, Quaternion q,Vector3Df w);
+        void SetValues(Vector3Df& p, Vector3Df& pd, Quaternion& q,Vector3Df& w);
+        void UpdateFrom(const core::io_data *data);
         void Reset(void); // No esta bien implementada aun
                 
         ///////////////////////////

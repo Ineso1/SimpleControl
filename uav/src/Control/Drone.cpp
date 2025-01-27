@@ -12,7 +12,7 @@ Drone::Drone(TargetController *controller) : DroneBase(controller) {
     perturbation = false;
 
     // Law instance
-    myLaw = new MyLaw(execLayout->At(1, 0), "MyLaw");
+    myLaw = new Law(execLayout->At(1, 0), "MyLaw");
 
     // Set Zero Orientation 
     initQuaternion =  GetCurrentQuaternion();
@@ -22,13 +22,13 @@ Drone::Drone(TargetController *controller) : DroneBase(controller) {
     // Set current position target
     flair::core::Vector3Df uav_p;
     uavVrpn->GetPosition(uav_p);
-    currentTarget = Vector3Df(uav_p.x,uav_p.y,1);
+    currentTarget = Vector3Df(uav_p.x,uav_p.y,-1);
 
     refAltitude = 1;
     refVerticalVelocity = 0;
     yawHold=vrpnQuaternion.ToEuler().yaw;
 
-    myLaw->SetTarget(currentTarget, Vector3Df(0,0,0), Quaternion(1,0,0,0));
+    // myLaw->SetTarget(currentTarget, Vector3Df(0,0,0), Quaternion(1,0,0,0));
 }
 
 Drone::~Drone() {
@@ -41,51 +41,51 @@ Drone::~Drone() {
 
 void Drone::PositionChange(void) {
     if(algorithmBehaviourMode == AlgorithmBehaviourMode_t::PositionPoint){
-        currentTarget = flair::core::Vector3Df(targetPosition_layout->Value().x, targetPosition_layout->Value().y, targetPosition_layout->Value().z);
+        currentTarget = flair::core::Vector3Df(targetPosition_layout->Value().x, targetPosition_layout->Value().y, -targetPosition_layout->Value().z);
     }
 }
 
 void Drone::HandleDisturbanceToggle() {
-    perturbation = !perturbation;
-    if (perturbation) {
-        Vector3Df perturbationVec = flair::core::Vector3Df(perturbation_layout->Value().x, perturbation_layout->Value().y, perturbation_layout->Value().z);
-        myLaw->SetPerturbation(perturbationVec, Vector3Df(0, 0, 0));
-        disturbanceModeState->SetText("state: on +++++");
-    } else {
-        myLaw->SetPerturbation(Vector3Df(0, 0, 0), Vector3Df(0, 0, 0));
-        disturbanceModeState->SetText("state: ----- off");
-    }
+    // perturbation = !perturbation;
+    // if (perturbation) {
+    //     Vector3Df perturbationVec = flair::core::Vector3Df(perturbation_layout->Value().x, perturbation_layout->Value().y, perturbation_layout->Value().z);
+    //     myLaw->SetPerturbation(perturbationVec, Vector3Df(0, 0, 0));
+    //     disturbanceModeState->SetText("state: on +++++");
+    // } else {
+    //     myLaw->SetPerturbation(Vector3Df(0, 0, 0), Vector3Df(0, 0, 0));
+    //     disturbanceModeState->SetText("state: ----- off");
+    // }
 }
 
 void Drone::RejectDisturbance() {
-    myLaw->isDisturbanceActive = !myLaw->isDisturbanceActive;
-    if(myLaw->isDisturbanceActive){
-        rejectionModeState->SetText("state: on +++++");
-    }
-    else{
-        rejectionModeState->SetText("state: ----- off");
-    }
+    // myLaw->isDisturbanceActive = !myLaw->isDisturbanceActive;
+    // if(myLaw->isDisturbanceActive){
+    //     rejectionModeState->SetText("state: on +++++");
+    // }
+    // else{
+    //     rejectionModeState->SetText("state: ----- off");
+    // }
 }
 
 void Drone::RejectRotDisturbance() {
-    myLaw->isDisturbanceRotActive = !myLaw->isDisturbanceRotActive;
-    if(myLaw->isDisturbanceRotActive){
-        rejectionRotModeState->SetText("state: on +++++");
-    }
-    else{
-        rejectionRotModeState->SetText("state: ----- off");
-    }
+    // myLaw->isDisturbanceRotActive = !myLaw->isDisturbanceRotActive;
+    // if(myLaw->isDisturbanceRotActive){
+    //     rejectionRotModeState->SetText("state: on +++++");
+    // }
+    // else{
+    //     rejectionRotModeState->SetText("state: ----- off");
+    // }
 }
 
 void Drone::ApplyKalman() {
-    kalman = !kalman;
-    myLaw->isKalmanActive = kalman;
-    if(kalman){
-        kalmanActivationState->SetText("state: on +++++");
-    }
-    else{
-        kalmanActivationState->SetText("state: ----- off");
-    }
+    // kalman = !kalman;
+    // myLaw->isKalmanActive = kalman;
+    // if(kalman){
+    //     kalmanActivationState->SetText("state: on +++++");
+    // }
+    // else{
+    //     kalmanActivationState->SetText("state: ----- off");
+    // }
 }
 
 /***************************************** 
@@ -93,20 +93,20 @@ void Drone::ApplyKalman() {
 *****************************************/
 
 void Drone::ApplyControl() {
-    switch(observerMode_layout->CurrentIndex()){
-        case 0:
-            myLaw->observerMode = MyLaw::ObserverMode_t::UDE;
-            break;
-        case 1:
-            myLaw->observerMode = MyLaw::ObserverMode_t::Luenberger;
-            break;
-        case 2:
-            myLaw->observerMode = MyLaw::ObserverMode_t::SuperTwist;
-            break;
-        case 3:
-            myLaw->observerMode = MyLaw::ObserverMode_t::SlidingMode;
-            break;
-    }
+    // switch(observerMode_layout->CurrentIndex()){
+    //     case 0:
+    //         myLaw->observerMode = MyLaw::ObserverMode_t::UDE;
+    //         break;
+    //     case 1:
+    //         myLaw->observerMode = MyLaw::ObserverMode_t::Luenberger;
+    //         break;
+    //     case 2:
+    //         myLaw->observerMode = MyLaw::ObserverMode_t::SuperTwist;
+    //         break;
+    //     case 3:
+    //         myLaw->observerMode = MyLaw::ObserverMode_t::SlidingMode;
+    //         break;
+    // }
 
     switch(beahviourMode_layout->CurrentIndex()){
         case 0:
@@ -154,18 +154,14 @@ void Drone::MixOrientation() {
 *****************************************/
 
 float Drone::ComputeCustomThrust() {
-    Vector3Df p,dp;
-    float thrust = 0;
-    uavVrpn->GetPosition(p);
-    uavVrpn->GetSpeed(dp);
-    PositionControl();
-    float perturbation_z = myLaw->perturbation_trans.z;
-    float w_estimated = myLaw->w_estimation_trans.z;
-        
-    std::cout<< "est\t" << w_estimated << "\t" << perturbation_z <<std::endl;
+    return myLaw->Output(3);
+}
 
-    thrust = myLaw->uZ_custom->Output() - (myLaw->mass * myLaw->g)/10 + perturbation_z - w_estimated;
-    return thrust;
+void Drone::ComputeCustomTorques(Euler &torques) {
+    ApplyControl();
+    torques.roll = myLaw->Output(0);
+    torques.pitch = myLaw->Output(1);
+    torques.yaw  = myLaw->Output(2);
 }
 
 
@@ -189,29 +185,6 @@ const AhrsData *Drone::GetOrientation(void) const {
 }
 
 
-AhrsData *Drone::GetReferenceOrientation(void) {
-    float yaw_ref;
-    Euler refAngles;
-
-    Vector3Df uav_p, uav_dp; 
-    Vector3Df aim_p, aim_dp;
-    Quaternion uav_q;
-    uavVrpn->GetPosition(uav_p);
-    uavVrpn->GetSpeed(uav_dp);
-    uav_q = GetCurrentQuaternion();
-
-    yaw_ref = yawHold;
-    refAngles.yaw=yaw_ref;
-
-    myLaw->UpdateTranslationControl(uav_p, uav_dp, uav_q);
-    refAngles.pitch=myLaw->uX_custom->Output();
-    refAngles.roll=-myLaw->uY_custom->Output();
-
-    customReferenceOrientation->SetQuaternionAndAngularRates(refAngles.ToQuaternion(),Vector3Df(0,0,0));
-
-    return customReferenceOrientation;
-}
-
 void Drone::AltitudeValues(float &z,float &dz) const{
     Vector3Df p,dp;
 
@@ -230,21 +203,44 @@ void Drone::PositionControl(){
     Vector3Df uav_p, uav_dp; 
     Vector3Df aim_p, aim_dp;
     Vector3Df rejectionPercent = flair::core::Vector3Df(rejectionPercent_layout->Value().x, rejectionPercent_layout->Value().y, rejectionPercent_layout->Value().z);
-    Quaternion q = GetCurrentQuaternion();
+    Quaternion q;
     Vector3Df w;
-    Quaternion aim_yaw(1,0,0,0);
+    Quaternion qz(1,0,0,0);
+    float yawref = 0;
 
-    aim_p = currentTarget;
-    aim_dp = Vector3Df(0, 0, 0);
+    GetOrientation()->GetQuaternionAndAngularRates(q, w);
 
     uavVrpn->GetPosition(uav_p);
     uavVrpn->GetSpeed(uav_dp);
 
-    myLaw->SetRejectionPercent(rejectionPercent);
-    myLaw->SetTarget(aim_p, aim_dp, aim_yaw);
+    aim_p = currentTarget;
+    aim_dp = Vector3Df(0, 0, 0);
 
-    myLaw->CalculateControl(uav_p, uav_dp, q, w);
-    myLaw->UpdateDynamics(uav_p, uav_dp, q, w);
+
+    // myLaw->SetRejectionPercent(rejectionPercent);
+    // myLaw->SetTarget(aim_p, aim_dp, qz);
+
+    // myLaw->CalculateControl(uav_p, uav_dp, q, w);
+    // myLaw->SetValues(uav_p, uav_dp, q, w);
+    
+    
+    
+    qz = Quaternion(cos(yawref/2),0,0,sin(yawref/2));
+    qz.Normalize();
+    Quaternion qze = qz.GetConjugate()*q;
+    Vector3Df thetaze = 2*qze.GetLogarithm();
+    float zsign = 1;
+    if (thetaze.GetNorm()>=3.1416){
+        zsign = -1;
+    }
+    qz = zsign*qz;
+
+    std::cout<<"d p:\t"<<aim_p.x<<"\t"<<aim_p.y<<"\t"<<aim_p.z<<std::endl;
+
+
+    myLaw->SetValues(q,qz,w,uav_p,aim_p,uav_dp,aim_dp);
+    
+    myLaw->Update(GetTime());
 }
 
 
