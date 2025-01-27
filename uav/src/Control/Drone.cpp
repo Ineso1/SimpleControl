@@ -22,13 +22,13 @@ Drone::Drone(TargetController *controller) : DroneBase(controller) {
     // Set current position target
     flair::core::Vector3Df uav_p;
     uavVrpn->GetPosition(uav_p);
-    currentTarget = Vector3Df(uav_p.x,uav_p.y,-1);
+    currentTarget = Vector3Df(0,0,-1);
 
     refAltitude = 1;
     refVerticalVelocity = 0;
     yawHold=vrpnQuaternion.ToEuler().yaw;
 
-    // myLaw->SetTarget(currentTarget, Vector3Df(0,0,0), Quaternion(1,0,0,0));
+    myLaw->SetTarget(currentTarget, Vector3Df(0,0,0), Quaternion(1,0,0,0));
 }
 
 Drone::~Drone() {

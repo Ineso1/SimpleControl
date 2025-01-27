@@ -22,7 +22,6 @@
 #include <AhrsData.h>
 #include <PidThrust.h>
 #include <chrono>
-#include "MyLaw.h"
 #include "Law.h"
 #include <iostream>
 
