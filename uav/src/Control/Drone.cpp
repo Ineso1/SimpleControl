@@ -208,6 +208,8 @@ void Drone::PositionControl(){
     Vector3Df uav_p, uav_dp; 
     Vector3Df aim_p, aim_dp;
     Vector3Df rejectionPercent = flair::core::Vector3Df(rejectionPercent_layout->Value().x, rejectionPercent_layout->Value().y, rejectionPercent_layout->Value().z);
+    Vector3Df rejectionRotPercent = flair::core::Vector3Df(rejectionPercentRot_layout->Value().x, rejectionPercentRot_layout->Value().y, rejectionPercentRot_layout->Value().z);
+
     Quaternion q;
     Vector3Df w;
     Quaternion qz(1,0,0,0);
@@ -221,7 +223,7 @@ void Drone::PositionControl(){
     aim_p = currentTarget;
     aim_dp = Vector3Df(0, 0, 0);
 
-    myLaw->SetRejectionPercent(rejectionPercent);
+    myLaw->SetRejectionPercent(rejectionPercent, rejectionRotPercent);
     myLaw->SetTarget(aim_p, aim_dp, qz);
 
 
@@ -253,6 +255,8 @@ void Drone::TargetFollowControl(){
     Vector3Df uav_p, uav_dp; 
     Vector3Df aim_p, aim_dp;
     Vector3Df rejectionPercent = flair::core::Vector3Df(rejectionPercent_layout->Value().x, rejectionPercent_layout->Value().y, rejectionPercent_layout->Value().z);
+    Vector3Df rejectionRotPercent = flair::core::Vector3Df(rejectionPercentRot_layout->Value().x, rejectionPercentRot_layout->Value().y, rejectionPercentRot_layout->Value().z);
+
     Quaternion q;
     Vector3Df w;
     Quaternion qz(1,0,0,0);
@@ -266,7 +270,7 @@ void Drone::TargetFollowControl(){
     aim_p = trayectory_circle.getNextPoint();;
     aim_dp = Vector3Df(0, 0, 0);
 
-    myLaw->SetRejectionPercent(rejectionPercent);
+    myLaw->SetRejectionPercent(rejectionPercent, rejectionRotPercent);
     myLaw->SetTarget(aim_p, aim_dp, qz);
 
 

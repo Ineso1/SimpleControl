@@ -56,6 +56,7 @@ Law::Law(const LayoutPosition* position,string name) : ControlLaw(position->getL
     Reset();
     first_update=true;
     isDisturbanceActive = false;
+    isDisturbanceRotActive = false;
     isKalmanActive = false;
     rejectionPercent = Vector3Df(0,0,0);
     rejectionRotPercent = Vector3Df(0,0,0);
@@ -89,10 +90,15 @@ Law::Law(const LayoutPosition* position,string name) : ControlLaw(position->getL
     GroupBox* params_groupbox = new GroupBox(paramsLayout->NewRow(),"Params");
     mg=new DoubleSpinBox(params_groupbox->NewRow(),"mg",0,100,0.0001);
 
-    GridLayout* udeLayout = new GridLayout(controlLayout->NewRow(), "Params");
-    GroupBox* ude_groupbox = new GroupBox(udeLayout->LastRowLastCol(),"Ude");
+    GridLayout* obsLayout = new GridLayout(controlLayout->NewRow(), "UDE");
+    GroupBox* ude_groupbox = new GroupBox(obsLayout->LastRowLastCol(),"gains");
     omegaGainsTrans=new Vector3DSpinBox(ude_groupbox->NewRow(),"omega trans",0,100,0.1);
     omegaGainsRot=new Vector3DSpinBox(ude_groupbox->NewRow(),"omega rot",0,100,0.1);
+    GroupBox* sm_groupbox = new GroupBox(obsLayout->LastRowLastCol(),"gains");    
+    smUpperBoundTrans=new DoubleSpinBox(ude_groupbox->NewRow(),"upperBound trans",0,100,0.00001);
+    smUpperBoundRot=new DoubleSpinBox(ude_groupbox->NewRow(),"upperBound rot",0,100,0.00001);
+    smFilterTrans=new DoubleSpinBox(ude_groupbox->NewRow(),"filter trans",0,100,0.00001);
+    smFilterRot=new DoubleSpinBox(ude_groupbox->NewRow(),"filter rot",0,100,0.00001);
 
 }
 
@@ -162,6 +168,8 @@ void Law::UpdateFrom(const io_data *data) {
         // w_estimation_trans = superTwist.EstimateDisturbance_trans(p, dp, u_thrust, dt);
         // w_estimation_rot = superTwist.EstimateDisturbance_rot(q, w, u_torque, dt);
     }else if(observerMode == Law::ObserverMode_t::SlidingMode){
+        slidingMode_obs.SetUpperBounds(smUpperBoundTrans->Value(), smUpperBoundRot->Value());
+        slidingMode_obs.SetFilterGains(smFilterTrans->Value(), smFilterRot->Value());
         w_estimation_trans = slidingMode_obs.EstimateDisturbance_trans(p, dp, u_thrust, dt);
         w_estimation_rot = slidingMode_obs.EstimateDisturbance_rot(q, w, u_torque, dt);
     }
@@ -169,11 +177,14 @@ void Law::UpdateFrom(const io_data *data) {
 
     if(!isDisturbanceActive){
         w_estimation_trans = Vector3Df(0,0,0); 
+    }
+
+    if(!isDisturbanceRotActive){
         w_estimation_rot = Vector3Df(0,0,0);
     }
 
     w_estimation_trans = Vector3Df(w_estimation_trans.x * rejectionPercent.x, w_estimation_trans.y * rejectionPercent.y, w_estimation_trans.z * rejectionPercent.z);
-    w_estimation_rot = Vector3Df(w_estimation_trans.x * rejectionPercent.x, w_estimation_trans.y * rejectionPercent.y, w_estimation_trans.z * rejectionPercent.z);
+    w_estimation_rot = Vector3Df(w_estimation_rot.x * rejectionRotPercent.x, w_estimation_rot.y * rejectionRotPercent.y, w_estimation_rot.z * rejectionRotPercent.z);
 
     std::cout<< "err\t" << pos_err.x << "\t" << pos_err.y << "\t" << pos_err.z << std::endl;
     std::cout<< "w_t\t" << w_estimation_trans.x << "\t" << w_estimation_trans.y << "\t" << w_estimation_trans.z << std::endl;
@@ -228,7 +239,7 @@ void Law::UpdateFrom(const io_data *data) {
     datt = kdatt->Value()*w;
 
     Vector3Df Tau_u = patt + datt;
-    Vector3Df Tau=Tau_u;
+    Vector3Df Tau=Tau_u - w_estimation_rot;
     Tau.Saturate(satAtt->Value());
 
     u_thrust = Fu;
@@ -307,8 +318,9 @@ void Law::SetTarget(Vector3Df target_pos, Vector3Df target_vel, Quaternion targe
     p_d = target_pos;
 }
 
-void Law::SetRejectionPercent(Vector3Df rejection){
+void Law::SetRejectionPercent(Vector3Df rejection, Vector3Df rejectionRot){
     rejectionPercent = rejection;
+    rejectionRotPercent = rejectionRot;
 }
 
 void Law::SetPerturbation(Vector3Df p_trans, Vector3Df p_rot){

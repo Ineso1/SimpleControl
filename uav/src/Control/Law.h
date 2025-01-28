@@ -75,6 +75,10 @@ namespace filter {
             flair::gui::Vector3DSpinBox *omegaGainsRot;
 
             Observer::SlidingMode slidingMode_obs;
+            flair::gui::DoubleSpinBox *smUpperBoundTrans;
+            flair::gui::DoubleSpinBox *smUpperBoundRot;
+            flair::gui::DoubleSpinBox *smFilterTrans;
+            flair::gui::DoubleSpinBox *smFilterRot;
 
             float previous_time;
             bool first_update;
@@ -90,7 +94,7 @@ namespace filter {
             void SetValues(core::Quaternion q,core::Quaternion qd,core::Vector3Df w,core::Vector3Df p, core::Vector3Df p_d,core::Vector3Df dp,core::Vector3Df dp_d);
         
             void SetTarget(core::Vector3Df, core::Vector3Df, core::Quaternion);
-            void SetRejectionPercent(core::Vector3Df);
+            void SetRejectionPercent(core::Vector3Df, core::Vector3Df);
             void SetPerturbation(core::Vector3Df, core::Vector3Df);
 
         private:
