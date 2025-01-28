@@ -4,12 +4,13 @@
 namespace Observer {
 
 UDE::UDE() { 
+ 
     firstIteration_trans = true;
     firstIteration_rot = true;
     B_pinv_trans = B_trans.completeOrthogonalDecomposition().pseudoInverse();
     B_pinv_rot = B_rot.completeOrthogonalDecomposition().pseudoInverse(); 
-    Omega_UDE_trans = 60.0f * Eigen::Matrix3f::Identity();
-    Omega_UDE_rot = 80.0f * Eigen::Matrix3f::Identity();
+    Omega_UDE_trans = 10.0f * Eigen::Matrix3f::Identity();
+    Omega_UDE_rot = 10.0f * Eigen::Matrix3f::Identity();
     xi_UDE_trans = Eigen::Vector3f::Zero();
     xi_UDE_rot = Eigen::Vector3f::Zero();
     x_trans = Eigen::VectorXf::Zero(6);
@@ -54,10 +55,10 @@ flair::core::Vector3Df UDE::EstimateDisturbance_trans(const flair::core::Vector3
     xi_dot_trans = -Omega_UDE_trans * xi_UDE_trans
                  - (Omega_UDE_trans * Omega_UDE_trans * (B_pinv_trans * x_t))
                  + Omega_UDE_trans * (B_pinv_trans * (A_trans * x_t))
-                 - Omega_UDE_trans * (u_thrust - Eigen::Vector3f(0, 0, 0 * g * mass));
+                 - Omega_UDE_trans * (u_thrust + Eigen::Vector3f(0, 0, g * mass)/10);
     xi_UDE_trans += dt * xi_dot_trans;
     w_hat_trans = xi_UDE_trans + Omega_UDE_trans * (B_pinv_trans * x_t);
-    dx_trans = A_trans * x_t + B_trans * (u_thrust - Eigen::Vector3f(0, 0, g * 0 * mass)) + B_trans * w_hat_trans;
+    dx_trans = A_trans * x_t + B_trans * (u_thrust + Eigen::Vector3f(0, 0, g * mass)/10) + B_trans * w_hat_trans;
     x_trans = x_t;
     #ifdef SAVE_STATE_ESTIMATION_CSV
         SaveStateEstimationCSV(x_trans, dx_trans, w_hat_trans, "TranslationalEstimation.csv");
@@ -65,7 +66,7 @@ flair::core::Vector3Df UDE::EstimateDisturbance_trans(const flair::core::Vector3
     #ifdef SAVE_UDE_DEBUG_CSV
         SaveUDEDebugCSV(u_thrust, xi_dot_trans, dt, "trans");
     #endif
-    return flair::core::Vector3Df(w_hat_trans.x()/10,w_hat_trans.y()/10,w_hat_trans.z()/10);
+    return flair::core::Vector3Df(w_hat_trans.x(),w_hat_trans.y(),w_hat_trans.z());
 }
 
 flair::core::Vector3Df UDE::EstimateDisturbance_rot(const flair::core::Quaternion& q_aux, const flair::core::Vector3Df& omega_aux, const flair::core::Vector3Df& u_torque_aux, float dt) {

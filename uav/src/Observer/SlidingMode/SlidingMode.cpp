@@ -58,7 +58,7 @@ flair::core::Vector3Df SlidingMode::EstimateDisturbance_trans(const flair::core:
     Eigen::Vector3f e_dp = dp - Eigen::Vector3f(x_trans[3], x_trans[4], x_trans[5]);
     Eigen::Vector3f s = c_p_trans * e_p + c_dp_trans * e_dp;
     Eigen::Vector3f omega = rho_trans * s.array().sign();
-    Eigen::VectorXf dx_hat = A_trans * x_trans + B_trans * (u_thrust - Eigen::Vector3f(0, 0, g * mass)) + B_trans * omega;
+    Eigen::VectorXf dx_hat = A_trans * x_trans + B_trans * (u_thrust + Eigen::Vector3f(0, 0, 0* g * mass)/10) + B_trans * omega;
     x_trans += dt * dx_hat;
     d_est_filtered_trans += (1 / tau_trans) * (-d_est_filtered_trans + omega) * dt;
     w_hat_trans = d_est_filtered_trans;

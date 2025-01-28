@@ -9,7 +9,6 @@
 #include <Vector3D.h>
 #include <Quaternion.h>
 
-
 namespace Observer {
 
 class UDE : public ObserverBase {

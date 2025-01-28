@@ -13,6 +13,8 @@
 #include <string>
 #include <chrono>
 #include "../Observer/UDE/UDE.h"
+#include "../Observer/SlidingMode/SlidingMode.h"
+#include <Tab.h>
 
 namespace flair {
     namespace gui {
@@ -69,6 +71,10 @@ namespace filter {
             flair::core::Vector3Df Fu;
 
             Observer::UDE ude_obs;
+            flair::gui::Vector3DSpinBox *omegaGainsTrans;
+            flair::gui::Vector3DSpinBox *omegaGainsRot;
+
+            Observer::SlidingMode slidingMode_obs;
 
             float previous_time;
             bool first_update;

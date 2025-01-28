@@ -74,7 +74,7 @@ Law::Law(const LayoutPosition* position,string name) : ControlLaw(position->getL
     dp_d = Vector3Df(0,0,0);
 
     controlLayout = new GridLayout(position, "PD control");
-    GroupBox* control_groupbox_att = new GroupBox(controlLayout->LastRowLastCol(),"Attitude");
+    GroupBox* control_groupbox_att = new GroupBox(controlLayout->LastRowLastCol(),"Ude");
     kpatt=new Vector3DSpinBox(control_groupbox_att->NewRow(),"kp att",0,100,1);
     kdatt=new Vector3DSpinBox(control_groupbox_att->NewRow(),"kd att",0,100,1);
     satAtt=new DoubleSpinBox(control_groupbox_att->NewRow(),"sat att:",0,1,0.1);
@@ -88,6 +88,12 @@ Law::Law(const LayoutPosition* position,string name) : ControlLaw(position->getL
     paramsLayout = new GridLayout(controlLayout->NewRow(), "Params");
     GroupBox* params_groupbox = new GroupBox(paramsLayout->NewRow(),"Params");
     mg=new DoubleSpinBox(params_groupbox->NewRow(),"mg",0,100,0.0001);
+
+    GridLayout* udeLayout = new GridLayout(controlLayout->NewRow(), "Params");
+    GroupBox* ude_groupbox = new GroupBox(udeLayout->LastRowLastCol(),"Ude");
+    omegaGainsTrans=new Vector3DSpinBox(ude_groupbox->NewRow(),"omega trans",0,100,0.1);
+    omegaGainsRot=new Vector3DSpinBox(ude_groupbox->NewRow(),"omega rot",0,100,0.1);
+
 }
 
 Law::~Law(void) {
@@ -106,10 +112,8 @@ void Law::Reset(void) {
 }
 
 void Law::UpdateFrom(const io_data *data) {
-    float delta_t,Fth, dt;
+    float Fth, dt;
     string currentstate;
-
-    // delta_t=(float)(data->DataTime()-previous_time)/1000000000.;
 
     input->GetMutex();
     Quaternion q(input->ValueNoMutex(0,0),input->ValueNoMutex(1,0),input->ValueNoMutex(2,0),input->ValueNoMutex(3,0));
@@ -122,12 +126,12 @@ void Law::UpdateFrom(const io_data *data) {
     Vector3Df dp_d(input->ValueNoMutex(20,0),input->ValueNoMutex(21,0),input->ValueNoMutex(22,0));
     input->ReleaseMutex();
 
+    Vector3Df pos_err=p-(p_d);
+    Vector3Df vel_err=dp-(dp_d);
+    Vector3Df ppos,dpos;
     
-
-    // float dt = delta_t;
     if(first_update==true) {
         previous_chrono_time = std::chrono::high_resolution_clock::now();
-        delta_t=0;
         dt=0;
         Fu.x=0;
         Fu.y=0;
@@ -135,13 +139,20 @@ void Law::UpdateFrom(const io_data *data) {
         first_update=false;
     }
 
+
     auto current_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<float> alt_dt = current_time - previous_chrono_time;
     dt = alt_dt.count();
 
-    // std::cout<< "_dt\t" << dt << std::endl;
-
     if(observerMode == Law::ObserverMode_t::UDE){
+        ude_obs.Omega_UDE_trans = (Eigen::Matrix3f() << 
+                                omegaGainsTrans->Value().x, 0.0f, 0.0f,
+                                0.0f, omegaGainsTrans->Value().y, 0.0f,
+                                0.0f, 0.0f, omegaGainsTrans->Value().z).finished();
+        ude_obs.Omega_UDE_rot = (Eigen::Matrix3f() << 
+                                omegaGainsRot->Value().x, 0.0f, 0.0f,
+                                0.0f, omegaGainsRot->Value().y, 0.0f,
+                                0.0f, 0.0f, omegaGainsRot->Value().z).finished();
         w_estimation_trans = ude_obs.EstimateDisturbance_trans(p, dp, u_thrust, dt);
         w_estimation_rot = ude_obs.EstimateDisturbance_rot(q, w, u_torque, dt);
     } else if(observerMode == Law::ObserverMode_t::Luenberger){
@@ -151,8 +162,8 @@ void Law::UpdateFrom(const io_data *data) {
         // w_estimation_trans = superTwist.EstimateDisturbance_trans(p, dp, u_thrust, dt);
         // w_estimation_rot = superTwist.EstimateDisturbance_rot(q, w, u_torque, dt);
     }else if(observerMode == Law::ObserverMode_t::SlidingMode){
-        // w_estimation_trans = slidingMode.EstimateDisturbance_trans(p, dp, u_thrust, dt);
-        // w_estimation_rot = slidingMode.EstimateDisturbance_rot(q, w, u_torque, dt);
+        w_estimation_trans = slidingMode_obs.EstimateDisturbance_trans(p, dp, u_thrust, dt);
+        w_estimation_rot = slidingMode_obs.EstimateDisturbance_rot(q, w, u_torque, dt);
     }
 
 
@@ -164,11 +175,8 @@ void Law::UpdateFrom(const io_data *data) {
     w_estimation_trans = Vector3Df(w_estimation_trans.x * rejectionPercent.x, w_estimation_trans.y * rejectionPercent.y, w_estimation_trans.z * rejectionPercent.z);
     w_estimation_rot = Vector3Df(w_estimation_trans.x * rejectionPercent.x, w_estimation_trans.y * rejectionPercent.y, w_estimation_trans.z * rejectionPercent.z);
 
-    std::cout<< "w_t\t" << w_estimation_trans.z << std::endl;
-
-    Vector3Df pos_err=p-(p_d);
-    Vector3Df vel_err=dp-(dp_d);
-    Vector3Df ppos,dpos;
+    std::cout<< "err\t" << pos_err.x << "\t" << pos_err.y << "\t" << pos_err.z << std::endl;
+    std::cout<< "w_t\t" << w_estimation_trans.x << "\t" << w_estimation_trans.y << "\t" << w_estimation_trans.z << std::endl;
     
 	if (pos_err.GetNorm()>satPos->Value()){
 		Vector3Df sat_pos_err = pos_err*(satPos->Value()/pos_err.GetNorm());
@@ -178,11 +186,14 @@ void Law::UpdateFrom(const io_data *data) {
     dpos = -kdpos->Value()*vel_err;
 
     Fu = (ppos + dpos);
+    Fu = Fu - w_estimation_trans;
 
 	Fu.Saturate(satPosForce->Value());
-    Fu.z = Fu.z - (mass * g /10) + w_estimation_trans.z;
+    Fu.z = Fu.z - (mass * g /10);
+
+    Vector3Df Fu_perturbed = Fu - perturbation_trans;
     
-	Fth = -Fu.GetNorm();
+	Fth = -Fu_perturbed.GetNorm();
 
     if (Fth>0){Fth = 0;}
 
@@ -190,9 +201,9 @@ void Law::UpdateFrom(const io_data *data) {
 
     qz = Quaternion(1,0,0,0);
 
-    if (Fu.GetNorm()!=0){
-        qt.q0=DotProduct(Vector3Df(0,0,-1),Fu)+Fu.GetNorm();      
-        Vector3Df tmp=CrossProduct(Vector3Df(0,0,-1),Fu);       
+    if (Fu_perturbed.GetNorm()!=0){
+        qt.q0=DotProduct(Vector3Df(0,0,-1),Fu_perturbed)+Fu_perturbed.GetNorm();      
+        Vector3Df tmp=CrossProduct(Vector3Df(0,0,-1),Fu_perturbed);       
         qt.q1=tmp.x;
         qt.q2=tmp.y;
         qt.q3=tmp.z;
@@ -218,7 +229,7 @@ void Law::UpdateFrom(const io_data *data) {
     Vector3Df Tau=Tau_u;
     Tau.Saturate(satAtt->Value());
 
-    u_thrust = Fu - perturbation_trans;
+    u_thrust = Fu;
     u_torque = Tau;
 
     output->SetValue(0,0,Tau.x);
@@ -258,7 +269,6 @@ void Law::UpdateFrom(const io_data *data) {
     stateM->SetValueNoMutex(22,0,dp_d.z);
     stateM->ReleaseMutex();
 
-    // previous_time= data->DataTime();
     previous_chrono_time = current_time;
 
     ProcessUpdate(output);
