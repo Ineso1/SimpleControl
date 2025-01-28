@@ -56,8 +56,8 @@ ObserverBase::ObserverBase() {
     omega = Eigen::Vector3f::Zero();
     domega = Eigen::Vector3f::Zero();
 
-    u_torque = Eigen::Vector3f::Zero();
-    u_thrust = Eigen::Vector3f::Zero();
+    // u_torque = Eigen::Vector3f::Zero();
+    // u_thrust = Eigen::Vector3f::Zero();
     Fu_inertial = 0;
 
     A_trans = Eigen::MatrixXf::Zero(6, 6);
@@ -106,10 +106,10 @@ void ObserverBase::SaveStateEstimationCSV(const Eigen::VectorXf& state, const Ei
     }
 }
 
-flair::core::Vector3Df ObserverBase::EstimateDisturbance_trans(const flair::core::Vector3Df& p, const flair::core::Vector3Df& dp, float dt){
+flair::core::Vector3Df ObserverBase::EstimateDisturbance_trans(const flair::core::Vector3Df& p, const flair::core::Vector3Df& dp, const flair::core::Vector3Df& u_thrust, float dt){
 }
 
-flair::core::Vector3Df ObserverBase::EstimateDisturbance_rot(const flair::core::Quaternion& q, const flair::core::Vector3Df& omega, float dt){
+flair::core::Vector3Df ObserverBase::EstimateDisturbance_rot(const flair::core::Quaternion& q, const flair::core::Vector3Df& omega, const flair::core::Vector3Df& u_torque, float dt){
 }
 
 Eigen::Vector3f ObserverBase::rotvec(const Eigen::Quaternionf &quat) {

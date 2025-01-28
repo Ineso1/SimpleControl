@@ -11,6 +11,7 @@
 #include <Quaternion.h>
 #include <ControlLaw.h>
 #include <string>
+#include <chrono>
 #include "../Observer/UDE/UDE.h"
 
 namespace flair {
@@ -29,6 +30,8 @@ namespace filter {
             bool isDisturbanceRotActive; // Flag for disturbance rotational activation
             bool isKalmanActive;
 
+            std::chrono::high_resolution_clock::time_point previous_chrono_time;
+
             flair::core::Vector3Df u_thrust;
             flair::core::Vector3Df u_torque;
 
@@ -39,6 +42,8 @@ namespace filter {
             flair::core::Vector3Df w_estimation_rot;
             flair::core::Vector3Df rejectionPercent;
             flair::core::Vector3Df rejectionRotPercent;
+
+            flair::core::Vector3Df perturbation_trans;
 
             flair::gui::GridLayout *controlLayout;
             flair::gui::GridLayout *paramsLayout;
@@ -80,6 +85,7 @@ namespace filter {
         
             void SetTarget(core::Vector3Df, core::Vector3Df, core::Quaternion);
             void SetRejectionPercent(core::Vector3Df);
+            void SetPerturbation(core::Vector3Df, core::Vector3Df);
 
         private:
     };

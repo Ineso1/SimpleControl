@@ -1,4 +1,5 @@
 #include "UDE.h"
+#include <iostream>
 
 namespace Observer {
 
@@ -37,10 +38,11 @@ void UDE::resetUDE(){
     firstIteration_rot = true;
 }
 
-flair::core::Vector3Df UDE::EstimateDisturbance_trans(const flair::core::Vector3Df& p_aux, const flair::core::Vector3Df& dp_aux, float dt) {
+flair::core::Vector3Df UDE::EstimateDisturbance_trans(const flair::core::Vector3Df& p_aux, const flair::core::Vector3Df& dp_aux, const flair::core::Vector3Df& u_thrust_aux, float dt) {
     Eigen::Vector3f p(p_aux.x, p_aux.y, p_aux.z);
     Eigen::Vector3f dp(dp_aux.x, dp_aux.y, dp_aux.z);
-    
+    Eigen::Vector3f u_thrust(u_thrust_aux.x, u_thrust_aux.y, u_thrust_aux.z);
+
     Eigen::VectorXf x_t(6);
     x_t << p, dp;
     if (firstIteration_trans)
@@ -52,10 +54,10 @@ flair::core::Vector3Df UDE::EstimateDisturbance_trans(const flair::core::Vector3
     xi_dot_trans = -Omega_UDE_trans * xi_UDE_trans
                  - (Omega_UDE_trans * Omega_UDE_trans * (B_pinv_trans * x_t))
                  + Omega_UDE_trans * (B_pinv_trans * (A_trans * x_t))
-                 - Omega_UDE_trans * (u_thrust - Eigen::Vector3f(0, 0, g * mass));
+                 - Omega_UDE_trans * (u_thrust - Eigen::Vector3f(0, 0, 0 * g * mass));
     xi_UDE_trans += dt * xi_dot_trans;
     w_hat_trans = xi_UDE_trans + Omega_UDE_trans * (B_pinv_trans * x_t);
-    dx_trans = A_trans * x_t + B_trans * (u_thrust - Eigen::Vector3f(0, 0, g * mass)) + B_trans * w_hat_trans;
+    dx_trans = A_trans * x_t + B_trans * (u_thrust - Eigen::Vector3f(0, 0, g * 0 * mass)) + B_trans * w_hat_trans;
     x_trans = x_t;
     #ifdef SAVE_STATE_ESTIMATION_CSV
         SaveStateEstimationCSV(x_trans, dx_trans, w_hat_trans, "TranslationalEstimation.csv");
@@ -63,12 +65,13 @@ flair::core::Vector3Df UDE::EstimateDisturbance_trans(const flair::core::Vector3
     #ifdef SAVE_UDE_DEBUG_CSV
         SaveUDEDebugCSV(u_thrust, xi_dot_trans, dt, "trans");
     #endif
-    return flair::core::Vector3Df(w_hat_trans.x(),w_hat_trans.y(),w_hat_trans.z());
+    return flair::core::Vector3Df(w_hat_trans.x()/10,w_hat_trans.y()/10,w_hat_trans.z()/10);
 }
 
-flair::core::Vector3Df UDE::EstimateDisturbance_rot(const flair::core::Quaternion& q_aux, const flair::core::Vector3Df& omega_aux, float dt) {
+flair::core::Vector3Df UDE::EstimateDisturbance_rot(const flair::core::Quaternion& q_aux, const flair::core::Vector3Df& omega_aux, const flair::core::Vector3Df& u_torque_aux, float dt) {
     Eigen::Quaternionf q(q_aux.q0, q_aux.q1, q_aux.q2, q_aux.q3);
     Eigen::Vector3f omega(omega_aux.x, omega_aux.y, omega_aux.z);
+    Eigen::Vector3f u_torque(u_torque_aux.x, u_torque_aux.y, u_torque_aux.z);
     
     Eigen::Vector3f u_torque_UDE = u_torque - omega.cross(J * omega);
     x_rot = Eigen::VectorXf(6);

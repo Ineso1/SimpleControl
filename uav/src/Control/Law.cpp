@@ -61,11 +61,14 @@ Law::Law(const LayoutPosition* position,string name) : ControlLaw(position->getL
     rejectionRotPercent = Vector3Df(0,0,0);
     w_estimation_trans = Vector3Df(0,0,0);
     w_estimation_rot = Vector3Df(0,0,0);
+    perturbation_trans = Vector3Df(0,0,0);
     u_thrust = Vector3Df(0,0,0);
     u_torque = Vector3Df(0,0,0);
     mass = 0.445;
     g = 9.81;
     observerMode = ObserverMode_t::UDE;
+
+    previous_chrono_time = std::chrono::high_resolution_clock::now();
 
     p_d = Vector3Df(0,0,1);
     dp_d = Vector3Df(0,0,0);
@@ -103,10 +106,10 @@ void Law::Reset(void) {
 }
 
 void Law::UpdateFrom(const io_data *data) {
-    float delta_t,Fth;
+    float delta_t,Fth, dt;
     string currentstate;
 
-    delta_t=(float)(data->DataTime()-previous_time)/1000000000.;
+    // delta_t=(float)(data->DataTime()-previous_time)/1000000000.;
 
     input->GetMutex();
     Quaternion q(input->ValueNoMutex(0,0),input->ValueNoMutex(1,0),input->ValueNoMutex(2,0),input->ValueNoMutex(3,0));
@@ -119,18 +122,49 @@ void Law::UpdateFrom(const io_data *data) {
     Vector3Df dp_d(input->ValueNoMutex(20,0),input->ValueNoMutex(21,0),input->ValueNoMutex(22,0));
     input->ReleaseMutex();
 
-    float dt=0.005;
-	float test;
+    
 
+    // float dt = delta_t;
     if(first_update==true) {
+        previous_chrono_time = std::chrono::high_resolution_clock::now();
         delta_t=0;
+        dt=0;
         Fu.x=0;
         Fu.y=0;
         Fu.z=0.452;
         first_update=false;
     }
 
-    // ude_obs.EstimateDisturbance_trans(p, dp, dt)
+    auto current_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<float> alt_dt = current_time - previous_chrono_time;
+    dt = alt_dt.count();
+
+    // std::cout<< "_dt\t" << dt << std::endl;
+
+    if(observerMode == Law::ObserverMode_t::UDE){
+        w_estimation_trans = ude_obs.EstimateDisturbance_trans(p, dp, u_thrust, dt);
+        w_estimation_rot = ude_obs.EstimateDisturbance_rot(q, w, u_torque, dt);
+    } else if(observerMode == Law::ObserverMode_t::Luenberger){
+        // w_estimation_trans = luenberger.EstimateDisturbance_trans(p, dp, u_thrust, dt);
+        // w_estimation_rot = luenberger.EstimateDisturbance_rot(q, w, u_torque, dt);
+    } else if(observerMode == Law::ObserverMode_t::SuperTwist){
+        // w_estimation_trans = superTwist.EstimateDisturbance_trans(p, dp, u_thrust, dt);
+        // w_estimation_rot = superTwist.EstimateDisturbance_rot(q, w, u_torque, dt);
+    }else if(observerMode == Law::ObserverMode_t::SlidingMode){
+        // w_estimation_trans = slidingMode.EstimateDisturbance_trans(p, dp, u_thrust, dt);
+        // w_estimation_rot = slidingMode.EstimateDisturbance_rot(q, w, u_torque, dt);
+    }
+
+
+    if(!isDisturbanceActive){
+        w_estimation_trans = Vector3Df(0,0,0); 
+        w_estimation_rot = Vector3Df(0,0,0);
+    }
+
+    w_estimation_trans = Vector3Df(w_estimation_trans.x * rejectionPercent.x, w_estimation_trans.y * rejectionPercent.y, w_estimation_trans.z * rejectionPercent.z);
+    w_estimation_rot = Vector3Df(w_estimation_trans.x * rejectionPercent.x, w_estimation_trans.y * rejectionPercent.y, w_estimation_trans.z * rejectionPercent.z);
+
+    std::cout<< "w_t\t" << w_estimation_trans.z << std::endl;
 
     Vector3Df pos_err=p-(p_d);
     Vector3Df vel_err=dp-(dp_d);
@@ -146,7 +180,7 @@ void Law::UpdateFrom(const io_data *data) {
     Fu = (ppos + dpos);
 
 	Fu.Saturate(satPosForce->Value());
-    Fu.z = Fu.z - 0.452;
+    Fu.z = Fu.z - (mass * g /10) + w_estimation_trans.z;
     
 	Fth = -Fu.GetNorm();
 
@@ -183,6 +217,9 @@ void Law::UpdateFrom(const io_data *data) {
     Vector3Df Tau_u = patt + datt;
     Vector3Df Tau=Tau_u;
     Tau.Saturate(satAtt->Value());
+
+    u_thrust = Fu - perturbation_trans;
+    u_torque = Tau;
 
     output->SetValue(0,0,Tau.x);
     output->SetValue(1,0,Tau.y);
@@ -221,7 +258,8 @@ void Law::UpdateFrom(const io_data *data) {
     stateM->SetValueNoMutex(22,0,dp_d.z);
     stateM->ReleaseMutex();
 
-    previous_time=data->DataTime();
+    // previous_time= data->DataTime();
+    previous_chrono_time = current_time;
 
     ProcessUpdate(output);
 }
@@ -259,6 +297,10 @@ void Law::SetTarget(Vector3Df target_pos, Vector3Df target_vel, Quaternion targe
 
 void Law::SetRejectionPercent(Vector3Df rejection){
     rejectionPercent = rejection;
+}
+
+void Law::SetPerturbation(Vector3Df p_trans, Vector3Df p_rot){
+    perturbation_trans = p_trans;
 }
 
 } // end namespace filter

@@ -49,10 +49,10 @@ void SlidingMode::SetSlidingGains(float c_p_trans_new, float c_dp_trans_new, flo
     c_omega_rot = c_omega_rot_new;
 }
 
-flair::core::Vector3Df SlidingMode::EstimateDisturbance_trans(const flair::core::Vector3Df& p_aux, const flair::core::Vector3Df& dp_aux, float dt) {
+flair::core::Vector3Df SlidingMode::EstimateDisturbance_trans(const flair::core::Vector3Df& p_aux, const flair::core::Vector3Df& dp_aux, const flair::core::Vector3Df& u_thrust_aux, float dt) {
     Eigen::Vector3f p(p_aux.x, p_aux.y, p_aux.z);
     Eigen::Vector3f dp(dp_aux.x, dp_aux.y, dp_aux.z);
-    
+    Eigen::Vector3f u_thrust(u_thrust_aux.x, u_thrust_aux.y, u_thrust_aux.z);
     
     Eigen::Vector3f e_p = p - Eigen::Vector3f(x_trans[0], x_trans[1], x_trans[2]);
     Eigen::Vector3f e_dp = dp - Eigen::Vector3f(x_trans[3], x_trans[4], x_trans[5]);
@@ -66,9 +66,10 @@ flair::core::Vector3Df SlidingMode::EstimateDisturbance_trans(const flair::core:
     return flair::core::Vector3Df(w_hat_trans.x(),w_hat_trans.y(),w_hat_trans.z());
 }
 
-flair::core::Vector3Df SlidingMode::EstimateDisturbance_rot(const flair::core::Quaternion& q_aux, const flair::core::Vector3Df& omega_aux, float dt) {
+flair::core::Vector3Df SlidingMode::EstimateDisturbance_rot(const flair::core::Quaternion& q_aux, const flair::core::Vector3Df& omega_aux, const flair::core::Vector3Df& u_torque_aux, float dt) {
     Eigen::Quaternionf q(q_aux.q0, q_aux.q1, q_aux.q2, q_aux.q3);
     Eigen::Vector3f omega(omega_aux.x, omega_aux.y, omega_aux.z);
+    Eigen::Vector3f u_torque(u_torque_aux.x, u_torque_aux.y, u_torque_aux.z);
     
     Eigen::Vector3f u_torque_SM = u_torque - omega.cross(J * omega);
     Eigen::Vector3f q_vec = rotvec(q);
