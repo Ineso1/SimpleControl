@@ -73,13 +73,13 @@ void Drone::RejectDisturbance() {
 }
 
 void Drone::RejectRotDisturbance() {
-    // myLaw->isDisturbanceRotActive = !myLaw->isDisturbanceRotActive;
-    // if(myLaw->isDisturbanceRotActive){
-    //     rejectionRotModeState->SetText("state: on +++++");
-    // }
-    // else{
-    //     rejectionRotModeState->SetText("state: ----- off");
-    // }
+    myLaw->isDisturbanceRotActive = !myLaw->isDisturbanceRotActive;
+    if(myLaw->isDisturbanceRotActive){
+        rejectionRotModeState->SetText("state: on +++++");
+    }
+    else{
+        rejectionRotModeState->SetText("state: ----- off");
+    }
 }
 
 void Drone::ApplyKalman() {

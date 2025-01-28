@@ -177,7 +177,9 @@ void Law::UpdateFrom(const io_data *data) {
 
     std::cout<< "err\t" << pos_err.x << "\t" << pos_err.y << "\t" << pos_err.z << std::endl;
     std::cout<< "w_t\t" << w_estimation_trans.x << "\t" << w_estimation_trans.y << "\t" << w_estimation_trans.z << std::endl;
+    std::cout<< "w_r\t" << w_estimation_rot.x << "\t" << w_estimation_rot.y << "\t" << w_estimation_rot.z << std::endl;
     
+
 	if (pos_err.GetNorm()>satPos->Value()){
 		Vector3Df sat_pos_err = pos_err*(satPos->Value()/pos_err.GetNorm());
     }
