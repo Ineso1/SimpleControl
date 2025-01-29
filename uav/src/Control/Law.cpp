@@ -94,16 +94,26 @@ Law::Law(const LayoutPosition* position,string name) : ControlLaw(position->getL
     GroupBox* ude_groupbox = new GroupBox(obsLayout->LastRowLastCol(),"gains");
     omegaGainsTrans=new Vector3DSpinBox(ude_groupbox->NewRow(),"omega trans",0,100,0.1);
     omegaGainsRot=new Vector3DSpinBox(ude_groupbox->NewRow(),"omega rot",0,100,0.1);
-    GroupBox* sm_groupbox = new GroupBox(obsLayout->LastRowLastCol(),"gains");    
-    smUpperBoundTrans=new DoubleSpinBox(ude_groupbox->NewRow(),"upperBound trans",0,100,0.00001);
-    smUpperBoundRot=new DoubleSpinBox(ude_groupbox->NewRow(),"upperBound rot",0,100,0.00001);
-    smFilterTrans=new DoubleSpinBox(ude_groupbox->NewRow(),"filter trans",0,100,0.00001);
-    smFilterRot=new DoubleSpinBox(ude_groupbox->NewRow(),"filter rot",0,100,0.00001);
+    GroupBox* sm_groupbox = new GroupBox(obsLayout->LastRowLastCol(),"Sliding Modes");    
+    smUpperBoundTrans=new DoubleSpinBox(sm_groupbox->NewRow(),"upperBound trans",0,100,0.00001);
+    smUpperBoundRot=new DoubleSpinBox(sm_groupbox->NewRow(),"upperBound rot",0,100,0.00001);
+    smFilterTrans=new DoubleSpinBox(sm_groupbox->NewRow(),"filter trans",0,100,0.00001);
+    smFilterRot=new DoubleSpinBox(sm_groupbox->NewRow(),"filter rot",0,100,0.00001);
+    smCeTrans=new DoubleSpinBox(sm_groupbox->NewRow(),"ce trans",0,100,0.00001,10);
+    smCeRot=new DoubleSpinBox(sm_groupbox->NewRow(),"ce rot",0,100,0.00001,7);
+    smCdeTrans=new DoubleSpinBox(sm_groupbox->NewRow(),"cde trans",0,100,0.00001,10);
+    smCdeRot=new DoubleSpinBox(sm_groupbox->NewRow(),"cde rot",0,100,0.00001,7);
 
-    smCeTrans=new DoubleSpinBox(ude_groupbox->NewRow(),"ce trans",0,100,0.00001,10);
-    smCeRot=new DoubleSpinBox(ude_groupbox->NewRow(),"ce rot",0,100,0.00001,7);
-    smCdeTrans=new DoubleSpinBox(ude_groupbox->NewRow(),"cde trans",0,100,0.00001,10);
-    smCdeRot=new DoubleSpinBox(ude_groupbox->NewRow(),"cde rot",0,100,0.00001,7);
+    GroupBox* st_groupbox = new GroupBox(obsLayout->LastRowLastCol(),"Super Twist");    
+    stUpperBoundTrans=new DoubleSpinBox(st_groupbox->NewRow(),"upperBound trans",0,100,0.00001);
+    stUpperBoundRot=new DoubleSpinBox(st_groupbox->NewRow(),"upperBound rot",0,100,0.00001);
+    stCeTrans=new DoubleSpinBox(st_groupbox->NewRow(),"ce trans",0,100,0.00001,10);
+    stCeRot=new DoubleSpinBox(st_groupbox->NewRow(),"ce rot",0,100,0.00001,7);
+    stCdeTrans=new DoubleSpinBox(st_groupbox->NewRow(),"cde trans",0,100,0.00001,10);
+    stCdeRot=new DoubleSpinBox(st_groupbox->NewRow(),"cde rot",0,100,0.00001,7);
+
+
+
 
 }
 
@@ -136,6 +146,12 @@ void Law::UpdateFrom(const io_data *data) {
     Vector3Df dp(input->ValueNoMutex(17,0),input->ValueNoMutex(18,0),input->ValueNoMutex(19,0));
     Vector3Df dp_d(input->ValueNoMutex(20,0),input->ValueNoMutex(21,0),input->ValueNoMutex(22,0));
     input->ReleaseMutex();
+
+    if(isKalmanActive){
+        Vector3Df p_noise = p;
+        kalmanFilter.KFC_estimate(p_noise, dp, u_thrust);
+        kalmanFilter.getState(p, dp);
+    }
 
     Vector3Df pos_err=p-(p_d);
     Vector3Df vel_err=dp-(dp_d);
@@ -170,8 +186,10 @@ void Law::UpdateFrom(const io_data *data) {
         // w_estimation_trans = luenberger.EstimateDisturbance_trans(p, dp, u_thrust, dt);
         // w_estimation_rot = luenberger.EstimateDisturbance_rot(q, w, u_torque, dt);
     } else if(observerMode == Law::ObserverMode_t::SuperTwist){
-        // w_estimation_trans = superTwist.EstimateDisturbance_trans(p, dp, u_thrust, dt);
-        // w_estimation_rot = superTwist.EstimateDisturbance_rot(q, w, u_torque, dt);
+        slidingMode_obs.SetUpperBounds(stUpperBoundTrans->Value(), stUpperBoundRot->Value());
+        slidingMode_obs.SetSlidingGains(stCeTrans->Value(), stCdeTrans->Value(), stCeRot->Value(), stCdeRot->Value());
+        w_estimation_trans = superTwist_obs.EstimateDisturbance_trans(p, dp, u_thrust, dt);
+        w_estimation_rot = superTwist_obs.EstimateDisturbance_rot(q, w, u_torque, dt);
     }else if(observerMode == Law::ObserverMode_t::SlidingMode){
         slidingMode_obs.SetUpperBounds(smUpperBoundTrans->Value(), smUpperBoundRot->Value());
         slidingMode_obs.SetFilterGains(smFilterTrans->Value(), smFilterRot->Value());
@@ -193,9 +211,8 @@ void Law::UpdateFrom(const io_data *data) {
     w_estimation_rot = Vector3Df(w_estimation_rot.x * rejectionRotPercent.x, w_estimation_rot.y * rejectionRotPercent.y, w_estimation_rot.z * rejectionRotPercent.z);
 
     std::cout<< "err\t" << pos_err.x << "\t" << pos_err.y << "\t" << pos_err.z << std::endl;
-    std::cout<< "w_t\t" << w_estimation_trans.x << "\t" << w_estimation_trans.y << "\t" << w_estimation_trans.z << std::endl;
-    std::cout<< "w_r\t" << w_estimation_rot.x << "\t" << w_estimation_rot.y << "\t" << w_estimation_rot.z << std::endl;
-    
+    // std::cout<< "w_t\t" << w_estimation_trans.x << "\t" << w_estimation_trans.y << "\t" << w_estimation_trans.z << std::endl;
+    // std::cout<< "w_r\t" << w_estimation_rot.x << "\t" << w_estimation_rot.y << "\t" << w_estimation_rot.z << std::endl;
 
 	if (pos_err.GetNorm()>satPos->Value()){
 		Vector3Df sat_pos_err = pos_err*(satPos->Value()/pos_err.GetNorm());

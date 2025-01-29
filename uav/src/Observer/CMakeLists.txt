@@ -7,4 +7,8 @@ add_compile_options(-Wno-poison-system-directories)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/UDE)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/SlidingMode)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/SuperTwist)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/Luenberger)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/KFC)
+
 

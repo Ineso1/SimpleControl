@@ -14,6 +14,11 @@
 #include <chrono>
 #include "../Observer/UDE/UDE.h"
 #include "../Observer/SlidingMode/SlidingMode.h"
+#include "../Observer/SuperTwist/SuperTwist.h"
+#include "../Observer/Luenberger/Luenberger.h"
+#include "../Observer/KFC/KFC.h"
+
+
 #include <Tab.h>
 
 namespace flair {
@@ -83,6 +88,16 @@ namespace filter {
             flair::gui::DoubleSpinBox *smCeRot;
             flair::gui::DoubleSpinBox *smCdeTrans;
             flair::gui::DoubleSpinBox *smCdeRot;
+
+            Observer::SlidingMode superTwist_obs;
+            flair::gui::DoubleSpinBox *stUpperBoundTrans;
+            flair::gui::DoubleSpinBox *stUpperBoundRot;
+            flair::gui::DoubleSpinBox *stCeTrans;
+            flair::gui::DoubleSpinBox *stCeRot;
+            flair::gui::DoubleSpinBox *stCdeTrans;
+            flair::gui::DoubleSpinBox *stCdeRot;
+
+            Observer::KFC kalmanFilter;
 
             float previous_time;
             bool first_update;

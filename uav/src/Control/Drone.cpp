@@ -83,14 +83,14 @@ void Drone::RejectRotDisturbance() {
 }
 
 void Drone::ApplyKalman() {
-    // kalman = !kalman;
-    // myLaw->isKalmanActive = kalman;
-    // if(kalman){
-    //     kalmanActivationState->SetText("state: on +++++");
-    // }
-    // else{
-    //     kalmanActivationState->SetText("state: ----- off");
-    // }
+    kalman = !kalman;
+    myLaw->isKalmanActive = kalman;
+    if(kalman){
+        kalmanActivationState->SetText("state: on +++++");
+    }
+    else{
+        kalmanActivationState->SetText("state: ----- off");
+    }
 }
 
 /***************************************** 
