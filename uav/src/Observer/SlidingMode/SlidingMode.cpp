@@ -55,14 +55,16 @@ flair::core::Vector3Df SlidingMode::EstimateDisturbance_trans(const flair::core:
     Eigen::Vector3f u_thrust(u_thrust_aux.x, u_thrust_aux.y, u_thrust_aux.z);
     
     Eigen::Vector3f e_p = p - Eigen::Vector3f(x_trans[0], x_trans[1], x_trans[2]);
+    std::cout<<e_p<<std::endl;
     Eigen::Vector3f e_dp = dp - Eigen::Vector3f(x_trans[3], x_trans[4], x_trans[5]);
+    std::cout<<e_p<<std::endl;
     Eigen::Vector3f s = c_p_trans * e_p + c_dp_trans * e_dp;
     Eigen::Vector3f omega = rho_trans * s.array().sign();
-    Eigen::VectorXf dx_hat = A_trans * x_trans + B_trans * (u_thrust + Eigen::Vector3f(0, 0, 0* g * mass)/10) + B_trans * omega;
+    Eigen::VectorXf dx_hat = A_trans * x_trans + B_trans * (u_thrust + Eigen::Vector3f(0, 0, g * mass)/10) + B_trans * omega;
     x_trans += dt * dx_hat;
     d_est_filtered_trans += (1 / tau_trans) * (-d_est_filtered_trans + omega) * dt;
     w_hat_trans = d_est_filtered_trans;
-    SaveStateEstimationCSV(x_trans, dx_hat, w_hat_trans, "TranslationalEstimation.csv");
+    // SaveStateEstimationCSV(x_trans, dx_hat, w_hat_trans, "TranslationalEstimation.csv");
     return flair::core::Vector3Df(w_hat_trans.x(),w_hat_trans.y(),w_hat_trans.z());
 }
 
@@ -81,7 +83,7 @@ flair::core::Vector3Df SlidingMode::EstimateDisturbance_rot(const flair::core::Q
     x_rot += dt * dx_hat;
     d_est_filtered_rot += (1 / tau_rot) * (-d_est_filtered_rot + omega_sm) * dt;
     w_hat_rot = d_est_filtered_rot;
-    SaveStateEstimationCSV(x_rot, dx_hat, w_hat_rot, "RotationalEstimation.csv");
+    // SaveStateEstimationCSV(x_rot, dx_hat, w_hat_rot, "RotationalEstimation.csv");
     return flair::core::Vector3Df(w_hat_rot.x(), w_hat_rot.y(), w_hat_rot.z());
 }
 

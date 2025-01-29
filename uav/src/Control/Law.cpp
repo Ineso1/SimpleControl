@@ -100,6 +100,11 @@ Law::Law(const LayoutPosition* position,string name) : ControlLaw(position->getL
     smFilterTrans=new DoubleSpinBox(ude_groupbox->NewRow(),"filter trans",0,100,0.00001);
     smFilterRot=new DoubleSpinBox(ude_groupbox->NewRow(),"filter rot",0,100,0.00001);
 
+    smCeTrans=new DoubleSpinBox(ude_groupbox->NewRow(),"ce trans",0,100,0.00001,10);
+    smCeRot=new DoubleSpinBox(ude_groupbox->NewRow(),"ce rot",0,100,0.00001,7);
+    smCdeTrans=new DoubleSpinBox(ude_groupbox->NewRow(),"cde trans",0,100,0.00001,10);
+    smCdeRot=new DoubleSpinBox(ude_groupbox->NewRow(),"cde rot",0,100,0.00001,7);
+
 }
 
 Law::~Law(void) {
@@ -170,6 +175,7 @@ void Law::UpdateFrom(const io_data *data) {
     }else if(observerMode == Law::ObserverMode_t::SlidingMode){
         slidingMode_obs.SetUpperBounds(smUpperBoundTrans->Value(), smUpperBoundRot->Value());
         slidingMode_obs.SetFilterGains(smFilterTrans->Value(), smFilterRot->Value());
+        slidingMode_obs.SetSlidingGains(smCeTrans->Value(), smCdeTrans->Value(), smCeRot->Value(), smCdeRot->Value());
         w_estimation_trans = slidingMode_obs.EstimateDisturbance_trans(p, dp, u_thrust, dt);
         w_estimation_rot = slidingMode_obs.EstimateDisturbance_rot(q, w, u_torque, dt);
     }

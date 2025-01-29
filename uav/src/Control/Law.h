@@ -79,6 +79,10 @@ namespace filter {
             flair::gui::DoubleSpinBox *smUpperBoundRot;
             flair::gui::DoubleSpinBox *smFilterTrans;
             flair::gui::DoubleSpinBox *smFilterRot;
+            flair::gui::DoubleSpinBox *smCeTrans;
+            flair::gui::DoubleSpinBox *smCeRot;
+            flair::gui::DoubleSpinBox *smCdeTrans;
+            flair::gui::DoubleSpinBox *smCdeRot;
 
             float previous_time;
             bool first_update;
