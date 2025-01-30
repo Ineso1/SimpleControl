@@ -25,6 +25,7 @@
 #include "Law.h"
 #include <iostream>
 #include "Trayectory.h"
+#include "SoftTrajectoryGenerator.h"
 
 class Drone : public DroneBase {
 public:
@@ -37,6 +38,9 @@ protected:
     std::chrono::high_resolution_clock::time_point previous_chrono_time_sequence;
     float sequenceTime;
     bool sequenceFirstTime;
+
+    flair::core::Vector3Df sequenceInitPos;
+
     float refAltitude;
     float refVerticalVelocity;
     float yawHold;
@@ -55,6 +59,7 @@ protected:
     // Control Law
     Law *myLaw;
     Trayectory trayectory_circle;
+    SoftTrajectoryGenerator softTrajectory;
 
     // Buttons handlers
     void PositionChange() override;

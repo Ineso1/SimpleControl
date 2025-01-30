@@ -66,6 +66,18 @@ DroneBase::DroneBase(TargetController *controller) : UavStateMachine(controller)
         SetFailSafeAltitudeSensor(uavVrpn->GetAltitudeSensor());
     }
     getFrameworkManager()->AddDeviceToLog(uavVrpn);
+
+    if (uav->GetVerticalCamera() == NULL)
+    {
+        Err("no vertical camera found\n");
+        exit(1);
+    }
+    if (uav->GetHorizontalCamera() == NULL)
+    {
+        Err("no horizontal camera found\n");
+        exit(1);
+    }
+    
     vrpnclient->Start();
 }
 

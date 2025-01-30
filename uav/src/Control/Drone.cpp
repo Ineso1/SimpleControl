@@ -6,6 +6,7 @@ Drone::Drone(TargetController *controller) : DroneBase(controller) {
     //Behave
     algorithmBehaviourMode = AlgorithmBehaviourMode_t::PositionPoint;
     sequenceFirstTime = true;
+    currentTarget = flair::core::Vector3Df(0,0,-1);
 
     // Toggle variables
     kalman = false;
@@ -34,6 +35,16 @@ Drone::Drone(TargetController *controller) : DroneBase(controller) {
     yawHold=vrpnQuaternion.ToEuler().yaw;
 
     myLaw->SetTarget(currentTarget, Vector3Df(0,0,0), Quaternion(1,0,0,0));
+
+    softTrajectory.addWaypoint(Eigen::Vector3f(0, 0, -1), 0);
+    softTrajectory.addWaypoint(Eigen::Vector3f(0, 0, -1), 10);
+    softTrajectory.addWaypoint(Eigen::Vector3f(-3, 5, -1), 20);
+    softTrajectory.addWaypoint(Eigen::Vector3f(4, -3.5, -1), 30);
+    softTrajectory.addWaypoint(Eigen::Vector3f(-1, -1.5, -1), 40);
+    softTrajectory.addWaypoint(Eigen::Vector3f(4.5, 2.5, -1), 50);
+    softTrajectory.addWaypoint(Eigen::Vector3f(-3, 0.5, -1), 60);
+
+    softTrajectory.generateTrajectories();
 }
 
 Drone::~Drone() {
@@ -296,6 +307,56 @@ void Drone::TargetFollowControl(){
 }
 
 void Drone::TestObserverSequence(void){
-   
+    Vector3Df uav_p, uav_dp; 
+    Vector3Df aim_p, aim_dp;
+    Vector3Df rejectionPercent = flair::core::Vector3Df(rejectionPercent_layout->Value().x, rejectionPercent_layout->Value().y, rejectionPercent_layout->Value().z);
+    Vector3Df rejectionRotPercent = flair::core::Vector3Df(rejectionPercentRot_layout->Value().x, rejectionPercentRot_layout->Value().y, rejectionPercentRot_layout->Value().z);
+
+    Quaternion q;
+    Vector3Df w;
+    Quaternion qz(1,0,0,0);
+    float yawref = 0;
+
+    GetOrientation()->GetQuaternionAndAngularRates(q, w);
+
+    uavVrpn->GetPosition(uav_p);
+    uavVrpn->GetSpeed(uav_dp);
+
+    if(sequenceFirstTime){
+        previous_chrono_time_sequence = std::chrono::high_resolution_clock::now();
+        sequenceTime = 0;
+        sequenceFirstTime = false;
+    }
+
+    float dt;
+    auto current_time_sequence = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<float> alt_dt = current_time_sequence - previous_chrono_time_sequence;
+    previous_chrono_time_sequence = current_time_sequence;
+    dt = alt_dt.count();
+    sequenceTime += dt;
+
+
+    Eigen::Vector3f pos, vel;
+    softTrajectory.getNextState(dt, pos, vel);
+
+    aim_p = flair::core::Vector3Df(pos.x(), pos.y(), pos.z());
+    aim_dp = flair::core::Vector3Df(vel.x(), vel.y(), vel.z());
+
+    myLaw->SetRejectionPercent(rejectionPercent, rejectionRotPercent);
+    myLaw->SetTarget(aim_p, aim_dp, qz);
+    
+    qz = Quaternion(cos(yawref/2),0,0,sin(yawref/2));
+    qz.Normalize();
+    Quaternion qze = qz.GetConjugate()*q;
+    Vector3Df thetaze = 2*qze.GetLogarithm();
+    float zsign = 1;
+    if (thetaze.GetNorm()>=3.1416){
+        zsign = -1;
+    }
+    qz = zsign*qz;
+
+    myLaw->SetValues(q,qz,w,uav_p,aim_p,uav_dp,aim_dp);
+    
+    myLaw->Update(GetTime());
 
 }
