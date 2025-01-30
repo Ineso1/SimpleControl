@@ -67,6 +67,7 @@ protected:
     void ApplyKalman(void) override;
     void RejectDisturbance(void) override;
     void RejectRotDisturbance(void) override;
+    void ResetSequence(void) override;
 
     // Control behave
     void ApplyControl(void) override;

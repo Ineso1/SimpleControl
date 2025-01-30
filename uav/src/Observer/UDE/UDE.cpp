@@ -58,7 +58,7 @@ flair::core::Vector3Df UDE::EstimateDisturbance_trans(const flair::core::Vector3
                  - Omega_UDE_trans * (u_thrust + Eigen::Vector3f(0, 0, g * mass)/10);
     xi_UDE_trans += dt * xi_dot_trans;
     w_hat_trans = xi_UDE_trans + Omega_UDE_trans * (B_pinv_trans * x_t);
-    dx_trans = A_trans * x_t + B_trans * (u_thrust + Eigen::Vector3f(0, 0, g * mass)/10) + B_trans * w_hat_trans;
+    //dx_trans = A_trans * x_t + B_trans * (u_thrust + Eigen::Vector3f(0, 0, g * mass)/10) + B_trans * w_hat_trans;
     x_trans = x_t;
     #ifdef SAVE_STATE_ESTIMATION_CSV
         SaveStateEstimationCSV(x_trans, dx_trans, w_hat_trans, "TranslationalEstimation.csv");
@@ -91,7 +91,7 @@ flair::core::Vector3Df UDE::EstimateDisturbance_rot(const flair::core::Quaternio
                  - Omega_UDE_rot * (u_torque_UDE);
     xi_UDE_rot += dt * xi_dot_rot;
     w_hat_rot = xi_UDE_rot + Omega_UDE_rot * (B_pinv_rot * x_rot);
-    dx_rot = A_rot * x_rot + B_rot * u_torque_UDE + B_rot * w_hat_rot;
+    //dx_rot = A_rot * x_rot + B_rot * u_torque_UDE + B_rot * w_hat_rot;
     x_rot += dt * dx_rot;
     #ifdef SAVE_STATE_ESTIMATION_CSV
         SaveStateEstimationCSV(x_rot, dx_rot, w_hat_rot, "RotationalEstimation.csv");

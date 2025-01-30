@@ -76,37 +76,37 @@ Law::Law(const LayoutPosition* position,string name) : ControlLaw(position->getL
 
     controlLayout = new GridLayout(position, "PD control");
     GroupBox* control_groupbox_att = new GroupBox(controlLayout->LastRowLastCol(),"Ude");
-    kpatt=new Vector3DSpinBox(control_groupbox_att->NewRow(),"kp att",0,100,1);
-    kdatt=new Vector3DSpinBox(control_groupbox_att->NewRow(),"kd att",0,100,1);
-    satAtt=new DoubleSpinBox(control_groupbox_att->NewRow(),"sat att:",0,1,0.1);
+    kpatt=new Vector3DSpinBox(control_groupbox_att->NewRow(),"kp att",0,100,0.01,4);
+    kdatt=new Vector3DSpinBox(control_groupbox_att->NewRow(),"kd att",0,100,0.01,4);
+    satAtt=new DoubleSpinBox(control_groupbox_att->NewRow(),"sat att:",0,1,0.01,4);
 
     GroupBox* control_groupbox_trans = new GroupBox(controlLayout->LastRowLastCol(),"Translation");
-    kppos=new Vector3DSpinBox(control_groupbox_trans->NewRow(),"kp pos",0,100,0.01);
-    kdpos=new Vector3DSpinBox(control_groupbox_trans->NewRow(),"kd pos",0,100,0.01);
-    satPos=new DoubleSpinBox(control_groupbox_trans->NewRow(),"satPos:",0,1,0.1);
-    satPosForce=new DoubleSpinBox(control_groupbox_trans->NewRow(),"satPosForce:",0,1,0.1);
+    kppos=new Vector3DSpinBox(control_groupbox_trans->NewRow(),"kp pos",0,100,0.01,4);
+    kdpos=new Vector3DSpinBox(control_groupbox_trans->NewRow(),"kd pos",0,100,0.01,4);
+    satPos=new DoubleSpinBox(control_groupbox_trans->NewRow(),"satPos:",0,1,0.1,4);
+    satPosForce=new DoubleSpinBox(control_groupbox_trans->NewRow(),"satPosForce:",0,1,0.1,4);
     
     paramsLayout = new GridLayout(controlLayout->NewRow(), "Params");
     GroupBox* params_groupbox = new GroupBox(paramsLayout->NewRow(),"Params");
-    mg=new DoubleSpinBox(params_groupbox->NewRow(),"mg",0,100,0.0001);
+    mg=new DoubleSpinBox(params_groupbox->NewRow(),"mg",0,100,0.0001,4);
 
     GridLayout* obsLayout = new GridLayout(controlLayout->NewRow(), "UDE");
     GroupBox* ude_groupbox = new GroupBox(obsLayout->LastRowLastCol(),"gains");
-    omegaGainsTrans=new Vector3DSpinBox(ude_groupbox->NewRow(),"omega trans",0,100,0.1);
-    omegaGainsRot=new Vector3DSpinBox(ude_groupbox->NewRow(),"omega rot",0,100,0.1);
+    omegaGainsTrans=new Vector3DSpinBox(ude_groupbox->NewRow(),"omega trans",0,100,0.1,4);
+    omegaGainsRot=new Vector3DSpinBox(ude_groupbox->NewRow(),"omega rot",0,100,0.1,4);
     GroupBox* sm_groupbox = new GroupBox(obsLayout->LastRowLastCol(),"Sliding Modes");    
-    smUpperBoundTrans=new DoubleSpinBox(sm_groupbox->NewRow(),"upperBound trans",0,100,0.00001);
-    smUpperBoundRot=new DoubleSpinBox(sm_groupbox->NewRow(),"upperBound rot",0,100,0.00001);
-    smFilterTrans=new DoubleSpinBox(sm_groupbox->NewRow(),"filter trans",0,100,0.00001);
-    smFilterRot=new DoubleSpinBox(sm_groupbox->NewRow(),"filter rot",0,100,0.00001);
+    smUpperBoundTrans=new DoubleSpinBox(sm_groupbox->NewRow(),"upperBound trans",0,100,0.00001,4);
+    smUpperBoundRot=new DoubleSpinBox(sm_groupbox->NewRow(),"upperBound rot",0,100,0.00001,4);
+    smFilterTrans=new DoubleSpinBox(sm_groupbox->NewRow(),"filter trans",0,100,0.00001,4);
+    smFilterRot=new DoubleSpinBox(sm_groupbox->NewRow(),"filter rot",0,100,0.00001,4);
     smCeTrans=new DoubleSpinBox(sm_groupbox->NewRow(),"ce trans",0,100,0.00001,10);
     smCeRot=new DoubleSpinBox(sm_groupbox->NewRow(),"ce rot",0,100,0.00001,7);
     smCdeTrans=new DoubleSpinBox(sm_groupbox->NewRow(),"cde trans",0,100,0.00001,10);
     smCdeRot=new DoubleSpinBox(sm_groupbox->NewRow(),"cde rot",0,100,0.00001,7);
 
     GroupBox* st_groupbox = new GroupBox(obsLayout->LastRowLastCol(),"Super Twist");    
-    stUpperBoundTrans=new DoubleSpinBox(st_groupbox->NewRow(),"upperBound trans",0,100,0.00001);
-    stUpperBoundRot=new DoubleSpinBox(st_groupbox->NewRow(),"upperBound rot",0,100,0.00001);
+    stUpperBoundTrans=new DoubleSpinBox(st_groupbox->NewRow(),"upperBound trans",0,100,0.00001,4);
+    stUpperBoundRot=new DoubleSpinBox(st_groupbox->NewRow(),"upperBound rot",0,100,0.00001,4);
     stCeTrans=new DoubleSpinBox(st_groupbox->NewRow(),"ce trans",0,100,0.00001,10);
     stCeRot=new DoubleSpinBox(st_groupbox->NewRow(),"ce rot",0,100,0.00001,7);
     stCdeTrans=new DoubleSpinBox(st_groupbox->NewRow(),"cde trans",0,100,0.00001,10);
@@ -210,7 +210,7 @@ void Law::UpdateFrom(const io_data *data) {
     w_estimation_trans = Vector3Df(w_estimation_trans.x * rejectionPercent.x, w_estimation_trans.y * rejectionPercent.y, w_estimation_trans.z * rejectionPercent.z);
     w_estimation_rot = Vector3Df(w_estimation_rot.x * rejectionRotPercent.x, w_estimation_rot.y * rejectionRotPercent.y, w_estimation_rot.z * rejectionRotPercent.z);
 
-    std::cout<< "err\t" << pos_err.x << "\t" << pos_err.y << "\t" << pos_err.z << std::endl;
+    //std::cout<< "err\t" << pos_err.x << "\t" << pos_err.y << "\t" << pos_err.z << std::endl;
     // std::cout<< "w_t\t" << w_estimation_trans.x << "\t" << w_estimation_trans.y << "\t" << w_estimation_trans.z << std::endl;
     // std::cout<< "w_r\t" << w_estimation_rot.x << "\t" << w_estimation_rot.y << "\t" << w_estimation_rot.z << std::endl;
 

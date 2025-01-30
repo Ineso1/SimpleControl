@@ -36,15 +36,17 @@ Drone::Drone(TargetController *controller) : DroneBase(controller) {
 
     myLaw->SetTarget(currentTarget, Vector3Df(0,0,0), Quaternion(1,0,0,0));
 
-    softTrajectory.addWaypoint(Eigen::Vector3f(0, 0, -1), 0);
-    softTrajectory.addWaypoint(Eigen::Vector3f(0, 0, -1), 10);
-    softTrajectory.addWaypoint(Eigen::Vector3f(3, 0, -1), 20);
-    softTrajectory.addWaypoint(Eigen::Vector3f(3, -3, -1), 30);
-    softTrajectory.addWaypoint(Eigen::Vector3f(-3, -3, -1), 40);
-    softTrajectory.addWaypoint(Eigen::Vector3f(-3, 0, -1), 50);
-    softTrajectory.addWaypoint(Eigen::Vector3f(0, 0, -1), 60);
 
-    softTrajectory.generateTrajectories();
+    /*
+    softTrajectory.addWaypoint(Eigen::Vector3f(0, 0, -1), 0);
+    softTrajectory.addWaypoint(Eigen::Vector3f(0, 0, -1), 5);
+    softTrajectory.addWaypoint(Eigen::Vector3f(0.5, 0, -1), 10);
+    softTrajectory.addWaypoint(Eigen::Vector3f(0.5, -0.5, -1), 15);
+    softTrajectory.addWaypoint(Eigen::Vector3f(-1.5, -0.5, -1), 20);
+    softTrajectory.addWaypoint(Eigen::Vector3f(-1.5, 0, -1), 25);
+    softTrajectory.addWaypoint(Eigen::Vector3f(0, 0, -1), 30);
+    */
+
 }
 
 Drone::~Drone() {
@@ -102,6 +104,10 @@ void Drone::ApplyKalman() {
     else{
         kalmanActivationState->SetText("state: ----- off");
     }
+}
+
+void Drone::ResetSequence() {
+    sequenceFirstTime = true;
 }
 
 /***************************************** 
@@ -251,7 +257,7 @@ void Drone::PositionControl(){
     }
     qz = zsign*qz;
 
-    std::cout<<"d p:\t"<<aim_p.x<<"\t"<<aim_p.y<<"\t"<<aim_p.z<<std::endl;
+    //std::cout<<"d p:\t"<<aim_p.x<<"\t"<<aim_p.y<<"\t"<<aim_p.z<<std::endl;
 
 
     myLaw->SetValues(q,qz,w,uav_p,aim_p,uav_dp,aim_dp);
@@ -298,7 +304,7 @@ void Drone::TargetFollowControl(){
     }
     qz = zsign*qz;
 
-    std::cout<<"d p:\t"<<aim_p.x<<"\t"<<aim_p.y<<"\t"<<aim_p.z<<std::endl;
+    //std::cout<<"d p:\t"<<aim_p.x<<"\t"<<aim_p.y<<"\t"<<aim_p.z<<std::endl;
 
 
     myLaw->SetValues(q,qz,w,uav_p,aim_p,uav_dp,aim_dp);
@@ -321,8 +327,42 @@ void Drone::TestObserverSequence(void){
 
     uavVrpn->GetPosition(uav_p);
     uavVrpn->GetSpeed(uav_dp);
+    
 
     if(sequenceFirstTime){
+        Vector3Df target_pos;
+        Vector3Df real_target_pos;
+
+        if (!targetVrpn->IsTracked(500)) {
+            Thread::Err("VRPN, target lost\n");
+            
+            Land();
+        }
+        else
+        {
+            targetVrpn->GetPosition(target_pos);
+        }
+        
+        
+
+        real_target_pos.x = target_pos.x + chargePos->Value().x;
+        real_target_pos.y = target_pos.y + chargePos->Value().y;
+        real_target_pos.z = - target_pos.z - chargePos->Value().z;
+
+
+        softTrajectory.addWaypoint(Eigen::Vector3f(0, 0, -1), 0);
+        softTrajectory.addWaypoint(Eigen::Vector3f(0, 0, -1), 5);
+
+        softTrajectory.addWaypoint(Eigen::Vector3f(real_target_pos.x, real_target_pos.y, real_target_pos.z - chargeHeight->Value()), 10);
+
+        softTrajectory.addWaypoint(Eigen::Vector3f(real_target_pos.x, real_target_pos.y, real_target_pos.z), 15);
+
+        softTrajectory.addWaypoint(Eigen::Vector3f(real_target_pos.x, real_target_pos.y, real_target_pos.z - chargeHeight->Value()), 20);
+
+        softTrajectory.addWaypoint(Eigen::Vector3f(0, 0, -2), 25);
+        softTrajectory.addWaypoint(Eigen::Vector3f(0, 0, -1), 30);
+
+        softTrajectory.generateTrajectories();
         previous_chrono_time_sequence = std::chrono::high_resolution_clock::now();
         sequenceTime = 0;
         sequenceFirstTime = false;

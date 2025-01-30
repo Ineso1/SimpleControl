@@ -52,6 +52,7 @@ protected:
     GroupBox* disturbanceRotEstimator;
     GroupBox *disturbanceSim;
     GroupBox *kalmanActivation;
+    GroupBox *chargeSequenceGroup;
 
     GridLayout* execLayout;
     PushButton *startTrajectory;
@@ -60,6 +61,7 @@ protected:
     PushButton *positionChange;
     PushButton *togglePerturbation;
     PushButton *toggleKalman;
+    PushButton *resetSequence;
     Vector3DSpinBox *targetPosition_layout;
     DoubleSpinBox *yawAngle_layout;
     Vector3DSpinBox *rejectionPercent_layout;
@@ -67,6 +69,9 @@ protected:
     PushButton *rejectPerturbation;
     PushButton *rejectRotPerturbation;
     Vector3DSpinBox *perturbation_layout;
+    Vector3DSpinBox *chargePos;
+    DoubleSpinBox *chargeHeight;
+
 
     ComboBox *beahviourMode_layout;
     ComboBox *observerMode_layout;
@@ -76,7 +81,7 @@ protected:
     Label *rejectionRotModeState;
     Label *kalmanActivationState;
 
-    MetaVrpnObject *uavVrpn;
+    MetaVrpnObject *uavVrpn, *targetVrpn;
 
     // Methods
     void StopTrajectory(void);
@@ -89,6 +94,7 @@ protected:
     virtual void RejectDisturbance(void);
     virtual void RejectRotDisturbance(void);
     virtual void ApplyKalman(void);
+    virtual void ResetSequence(void);
 
     // State Machine Functions
     void SignalEvent(Event_t event) override;

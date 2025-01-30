@@ -54,32 +54,29 @@ DroneBase::DroneBase(TargetController *controller) : UavStateMachine(controller)
     toggleKalman = new PushButton(kalmanActivation->NewRow(), "Toggle Kalman Activation");
 
 
+    chargeSequenceGroup = new GroupBox(GetButtonsLayout()->LastRowLastCol(),"Charge Sequence");
+    chargeHeight = new DoubleSpinBox(chargeSequenceGroup->NewRow(),"chargeHeight",0,100,0.00001,4);
+    chargePos = new Vector3DSpinBox(chargeSequenceGroup->NewRow(),"chargePos",0,100,0.00001,4);
+    resetSequence = new PushButton(chargeSequenceGroup->NewRow(),"Reset Sequence");
+
+
     VrpnClient* vrpnclient = new VrpnClient("vrpn", uav->GetDefaultVrpnAddress(), 80, uav->GetDefaultVrpnConnectionType());
     if (vrpnclient->ConnectionType() == VrpnClient::Xbee) {
         uavVrpn = new MetaVrpnObject(uav->ObjectName(), static_cast<uint8_t>(0));
+        targetVrpn=new MetaVrpnObject("target",1);
     } else if (vrpnclient->ConnectionType() == VrpnClient::Vrpn) {
         uavVrpn = new MetaVrpnObject(uav->ObjectName());
+        targetVrpn=new MetaVrpnObject("target");
     } else if (vrpnclient->ConnectionType() == VrpnClient::VrpnLite) {
         uavVrpn = new MetaVrpnObject(uav->ObjectName());
+        targetVrpn=new MetaVrpnObject("target");
     }
     if (uav->GetType() == "mamboedu") {
         SetFailSafeAltitudeSensor(uavVrpn->GetAltitudeSensor());
     }
     getFrameworkManager()->AddDeviceToLog(uavVrpn);
-
-/*
-    if (uav->GetVerticalCamera() == NULL)
-    {
-        Err("no vertical camera found\n");
-        exit(1);
-    }
-    if (uav->GetHorizontalCamera() == NULL)
-    {
-        Err("no horizontal camera found\n");
-        exit(1);
-    }
-*/
-    
+    getFrameworkManager()->AddDeviceToLog(targetVrpn);
+ 
     vrpnclient->Start();
 }
 
@@ -140,6 +137,10 @@ void DroneBase::ExtraCheckPushButton() {
     if (toggleKalman->Clicked())
     {
         ApplyKalman();
+    }
+    if (resetSequence->Clicked())
+    {
+        ResetSequence();
     }
 }
 
@@ -219,5 +220,9 @@ void DroneBase::ApplyControl(void){
 }
 
 void DroneBase::ApplyKalman(void){
+    std::cout << "Need to override this" << std::endl;
+}
+
+void DroneBase::ResetSequence(void){
     std::cout << "Need to override this" << std::endl;
 }
