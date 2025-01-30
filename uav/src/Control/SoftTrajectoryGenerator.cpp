@@ -50,7 +50,8 @@ void SoftTrajectoryGenerator::getNextState(float dt, Eigen::Vector3f& position, 
             return;
         }
     }
-    position.setZero();
+    // position.setZero();
+    position = waypoints.back().position;
     velocity.setZero();
 }
 
