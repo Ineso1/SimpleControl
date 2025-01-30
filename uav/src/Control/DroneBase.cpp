@@ -67,6 +67,7 @@ DroneBase::DroneBase(TargetController *controller) : UavStateMachine(controller)
     }
     getFrameworkManager()->AddDeviceToLog(uavVrpn);
 
+/*
     if (uav->GetVerticalCamera() == NULL)
     {
         Err("no vertical camera found\n");
@@ -77,6 +78,7 @@ DroneBase::DroneBase(TargetController *controller) : UavStateMachine(controller)
         Err("no horizontal camera found\n");
         exit(1);
     }
+*/
     
     vrpnclient->Start();
 }

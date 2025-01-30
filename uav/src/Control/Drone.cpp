@@ -38,11 +38,11 @@ Drone::Drone(TargetController *controller) : DroneBase(controller) {
 
     softTrajectory.addWaypoint(Eigen::Vector3f(0, 0, -1), 0);
     softTrajectory.addWaypoint(Eigen::Vector3f(0, 0, -1), 10);
-    softTrajectory.addWaypoint(Eigen::Vector3f(-3, 5, -1), 20);
-    softTrajectory.addWaypoint(Eigen::Vector3f(4, -3.5, -1), 30);
-    softTrajectory.addWaypoint(Eigen::Vector3f(-1, -1.5, -1), 40);
-    softTrajectory.addWaypoint(Eigen::Vector3f(4.5, 2.5, -1), 50);
-    softTrajectory.addWaypoint(Eigen::Vector3f(-3, 0.5, -1), 60);
+    softTrajectory.addWaypoint(Eigen::Vector3f(3, 0, -1), 20);
+    softTrajectory.addWaypoint(Eigen::Vector3f(3, -3, -1), 30);
+    softTrajectory.addWaypoint(Eigen::Vector3f(-3, -3, -1), 40);
+    softTrajectory.addWaypoint(Eigen::Vector3f(-3, 0, -1), 50);
+    softTrajectory.addWaypoint(Eigen::Vector3f(0, 0, -1), 60);
 
     softTrajectory.generateTrajectories();
 }
