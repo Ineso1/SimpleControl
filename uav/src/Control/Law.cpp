@@ -183,11 +183,11 @@ void Law::UpdateFrom(const io_data *data) {
         w_estimation_trans = ude_obs.EstimateDisturbance_trans(p, dp, u_thrust, dt);
         w_estimation_rot = ude_obs.EstimateDisturbance_rot(q, w, u_torque, dt);
     } else if(observerMode == Law::ObserverMode_t::Luenberger){
-        // w_estimation_trans = luenberger.EstimateDisturbance_trans(p, dp, u_thrust, dt);
-        // w_estimation_rot = luenberger.EstimateDisturbance_rot(q, w, u_torque, dt);
+        w_estimation_trans = luenberger_obs.EstimateDisturbance_trans(p, dp, u_thrust, dt);
+        w_estimation_rot = luenberger_obs.EstimateDisturbance_rot(q, w, u_torque, dt);
     } else if(observerMode == Law::ObserverMode_t::SuperTwist){
-        slidingMode_obs.SetUpperBounds(stUpperBoundTrans->Value(), stUpperBoundRot->Value());
-        slidingMode_obs.SetSlidingGains(stCeTrans->Value(), stCdeTrans->Value(), stCeRot->Value(), stCdeRot->Value());
+        superTwist_obs.SetUpperBounds(stUpperBoundTrans->Value(), stUpperBoundRot->Value());
+        superTwist_obs.SetSlidingGains(stCeTrans->Value(), stCdeTrans->Value(), stCeRot->Value(), stCdeRot->Value());
         w_estimation_trans = superTwist_obs.EstimateDisturbance_trans(p, dp, u_thrust, dt);
         w_estimation_rot = superTwist_obs.EstimateDisturbance_rot(q, w, u_torque, dt);
     }else if(observerMode == Law::ObserverMode_t::SlidingMode){
@@ -211,8 +211,8 @@ void Law::UpdateFrom(const io_data *data) {
     w_estimation_rot = Vector3Df(w_estimation_rot.x * rejectionRotPercent.x, w_estimation_rot.y * rejectionRotPercent.y, w_estimation_rot.z * rejectionRotPercent.z);
 
     //std::cout<< "err\t" << pos_err.x << "\t" << pos_err.y << "\t" << pos_err.z << std::endl;
-    // std::cout<< "w_t\t" << w_estimation_trans.x << "\t" << w_estimation_trans.y << "\t" << w_estimation_trans.z << std::endl;
-    // std::cout<< "w_r\t" << w_estimation_rot.x << "\t" << w_estimation_rot.y << "\t" << w_estimation_rot.z << std::endl;
+    std::cout<< "w_t\t" << w_estimation_trans.x << "\t" << w_estimation_trans.y << "\t" << w_estimation_trans.z << std::endl;
+    //std::cout<< "w_r\t" << w_estimation_rot.x << "\t" << w_estimation_rot.y << "\t" << w_estimation_rot.z << std::endl;
 
 	if (pos_err.GetNorm()>satPos->Value()){
 		Vector3Df sat_pos_err = pos_err*(satPos->Value()/pos_err.GetNorm());

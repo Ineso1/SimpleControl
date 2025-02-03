@@ -89,13 +89,15 @@ namespace filter {
             flair::gui::DoubleSpinBox *smCdeTrans;
             flair::gui::DoubleSpinBox *smCdeRot;
 
-            Observer::SlidingMode superTwist_obs;
+            Observer::SuperTwist superTwist_obs;
             flair::gui::DoubleSpinBox *stUpperBoundTrans;
             flair::gui::DoubleSpinBox *stUpperBoundRot;
             flair::gui::DoubleSpinBox *stCeTrans;
             flair::gui::DoubleSpinBox *stCeRot;
             flair::gui::DoubleSpinBox *stCdeTrans;
             flair::gui::DoubleSpinBox *stCdeRot;
+
+            Observer::Luenberger luenberger_obs;
 
             Observer::KFC kalmanFilter;
 
