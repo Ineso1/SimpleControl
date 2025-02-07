@@ -211,7 +211,7 @@ void Law::UpdateFrom(const io_data *data) {
     w_estimation_rot = Vector3Df(w_estimation_rot.x * rejectionRotPercent.x, w_estimation_rot.y * rejectionRotPercent.y, w_estimation_rot.z * rejectionRotPercent.z);
 
     //std::cout<< "err\t" << pos_err.x << "\t" << pos_err.y << "\t" << pos_err.z << std::endl;
-    std::cout<< "w_t\t" << w_estimation_trans.x << "\t" << w_estimation_trans.y << "\t" << w_estimation_trans.z << std::endl;
+    //std::cout<< "w_t\t" << w_estimation_trans.x << "\t" << w_estimation_trans.y << "\t" << w_estimation_trans.z << std::endl;
     //std::cout<< "w_r\t" << w_estimation_rot.x << "\t" << w_estimation_rot.y << "\t" << w_estimation_rot.z << std::endl;
 
 	if (pos_err.GetNorm()>satPos->Value()){
@@ -220,6 +220,9 @@ void Law::UpdateFrom(const io_data *data) {
 
     ppos = -kppos->Value()*pos_err;
     dpos = -kdpos->Value()*vel_err;
+
+    std::cout<< ppos.x << "\t" << ppos.y << "\t" << ppos.z <<std::endl;
+    std::cout<< dpos.x << "\t" << dpos.y << "\t" << dpos.z <<std::endl;
 
     Fu = (ppos + dpos);
     Fu = Fu - w_estimation_trans;

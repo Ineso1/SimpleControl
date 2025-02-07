@@ -12,7 +12,7 @@ Drone::Drone(TargetController *controller) : DroneBase(controller) {
     kalman = false;
     perturbation = false;
 
-    float diameter = 8.0;
+    float diameter = 2.0;
     float fixedZ = -1.0;
     float resolution = 0.002;
     trayectory_circle = Trayectory(diameter,fixedZ,resolution);
@@ -35,17 +35,6 @@ Drone::Drone(TargetController *controller) : DroneBase(controller) {
     yawHold=vrpnQuaternion.ToEuler().yaw;
 
     myLaw->SetTarget(currentTarget, Vector3Df(0,0,0), Quaternion(1,0,0,0));
-
-
-    /*
-    softTrajectory.addWaypoint(Eigen::Vector3f(0, 0, -1), 0);
-    softTrajectory.addWaypoint(Eigen::Vector3f(0, 0, -1), 5);
-    softTrajectory.addWaypoint(Eigen::Vector3f(0.5, 0, -1), 10);
-    softTrajectory.addWaypoint(Eigen::Vector3f(0.5, -0.5, -1), 15);
-    softTrajectory.addWaypoint(Eigen::Vector3f(-1.5, -0.5, -1), 20);
-    softTrajectory.addWaypoint(Eigen::Vector3f(-1.5, 0, -1), 25);
-    softTrajectory.addWaypoint(Eigen::Vector3f(0, 0, -1), 30);
-    */
 
 }
 

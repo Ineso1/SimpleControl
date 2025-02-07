@@ -21,6 +21,34 @@ void SoftTrajectoryGenerator::generateTrajectories() {
     }
 }
 
+void SoftTrajectoryGenerator::getNextState(float dt, Eigen::Vector3f& position, Eigen::Vector3f& velocity) {
+    currentTime += dt;
+    for (const auto& segment : trajectorySegments) {
+        if (segment.startTime <= currentTime && currentTime <= segment.endTime) {
+            position.x() = evaluatePolynomial(segment.coeffs_x, currentTime);
+            position.y() = evaluatePolynomial(segment.coeffs_y, currentTime);
+            position.z() = evaluatePolynomial(segment.coeffs_z, currentTime);
+            
+            velocity.x() = evaluatePolynomial(segment.v_coeffs_x, currentTime);
+            velocity.y() = evaluatePolynomial(segment.v_coeffs_y, currentTime);
+            velocity.z() = evaluatePolynomial(segment.v_coeffs_z, currentTime);
+            return;
+        }
+    }
+    position = waypoints.back().position;
+    velocity.setZero();
+}
+
+float SoftTrajectoryGenerator::evaluatePolynomial(const Eigen::VectorXf& coeffs, float t) {
+    float result = 0.0f;
+    float power = 1.0f;
+    for (int i = 0; i < coeffs.size(); ++i) {
+        result += coeffs[i] * power;
+        power *= t;
+    }
+    return result;
+}
+
 Eigen::VectorXf SoftTrajectoryGenerator::computeQuinticCoefficients(float t0, float tf, float p0, float pf, float v0, float vf, float a0, float af) {
     Eigen::Matrix<float, 6, 6> A;
     Eigen::Matrix<float, 6, 1> b;
@@ -34,33 +62,4 @@ Eigen::VectorXf SoftTrajectoryGenerator::computeQuinticCoefficients(float t0, fl
     
     b << p0, pf, v0, vf, a0, af;
     return A.colPivHouseholderQr().solve(b);
-}
-
-void SoftTrajectoryGenerator::getNextState(float dt, Eigen::Vector3f& position, Eigen::Vector3f& velocity) {
-    currentTime += dt;
-    for (const auto& segment : trajectorySegments) {
-        if (segment.startTime <= currentTime && currentTime <= segment.endTime) {
-            position.x() = evaluatePolynomial(segment.coeffs_x, currentTime);
-            position.y() = evaluatePolynomial(segment.coeffs_y, currentTime);
-            position.z() = evaluatePolynomial(segment.coeffs_z, currentTime);
-            
-            velocity.x() = evaluatePolynomial(segment.coeffs_x, currentTime);
-            velocity.y() = evaluatePolynomial(segment.coeffs_y, currentTime);
-            velocity.z() = evaluatePolynomial(segment.coeffs_z, currentTime);
-            return;
-        }
-    }
-    // position.setZero();
-    position = waypoints.back().position;
-    velocity.setZero();
-}
-
-float SoftTrajectoryGenerator::evaluatePolynomial(const Eigen::VectorXf& coeffs, float t) {
-    float result = 0.0f;
-    float power = 1.0f; // t^0 = 1
-    for (int i = 0; i < coeffs.size(); ++i) {
-        result += coeffs[i] * power;
-        power *= t; // Increment power of t
-    }
-    return result;
 }
