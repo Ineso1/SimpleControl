@@ -1,4 +1,4 @@
-#include "SimpleControl.h"
+#include "./Control/Drone.h"
 #include <UavFactory.h>
 #include <FrameworkManager.h>
 #include <stdio.h>
@@ -31,9 +31,9 @@ int main(int argc, char* argv[]) {
     manager->SetupUserInterface(xml_file);
     manager->SetupLogger(log_path);
 
-    Uav* drone=CreateUav(name,uav_type);
+    Uav* drone=CreateUav(name,uav_type,"use_camv=false use_camh=false");
     TargetEthController *controller=new TargetEthController("Dualshock3",ds3port);
-    SimpleControl* demo=new SimpleControl(controller);
+    Drone* demo=new Drone(controller);
 
     demo->Start();
     demo->Join();
