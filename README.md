@@ -1,8 +1,8 @@
-# SimpleControl
+# drone_disturbance_rejection_control_flair
 
 ## Overview
 
-**SimpleControl** is a control framework designed for drones, providing flexible flight mode management and disturbance observer estimation. This project integrates various control and estimation methods and is developed for use with the [FL-AIR framework](https://gitlab.utc.fr/uav-hds/flair/flair-src).
+**drone_disturbance_rejection_control_flair** is a control framework designed for drones, providing flexible flight mode management and disturbance observer estimation. This project integrates various control and estimation methods and is developed for use with the [FL-AIR framework](https://gitlab.utc.fr/uav-hds/flair/flair-src).
 
 
 ![DroneSimulation](./ReadmeImages/droneSim.png)
